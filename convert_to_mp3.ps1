@@ -73,19 +73,26 @@ Get-ChildItem -Path $SourceFolder -Include *.m4a, *.opus, *.mp3, *.flac, *.wav -
     if ([string]::IsNullOrWhiteSpace($currentTitle)) {
         $cleanTitle = $originalName -replace '\s\([a-z0-9]+_(?:Opus|AAC)\)$', ''
         
-        Write-Host "Metadata missing. Copying $cleanTitle with metadata..." -ForegroundColor Yellow
+        Write-Host "Metadata missing for $cleanTitle. Copying with metadata..." -ForegroundColor Yellow
         
-        ffmpeg -i $_.FullName `
-            -c copy `
-            -map_metadata 0 `
-            -metadata title="$cleanTitle" `
-            -id3v2_version 3 `
-            -y $TargetFilePath 2>$null
+        # ffmpeg -i $_.FullName `
+        #     -c copy `
+        #     -map_metadata 0 `
+        #     -metadata title="$cleanTitle" `
+        #     -id3v2_version 3 `
+        #     -y $TargetFilePath 2>$null
     }
     else {
         Write-Host "Metadata already exists for $currentTitle. Copying..." -ForegroundColor Gray
-        Copy-Item -Path $_.FullName -Destination $TargetFilePath -Force
+        # Copy-Item -Path $_.FullName -Destination $TargetFilePath -Force
     }
+
+	ffmpeg -i $_.FullName `
+		-c copy `
+		-map_metadata 0 `
+		-metadata title="$cleanTitle" `
+		-id3v2_version 3 `
+		-y $TargetFilePath 2>$null
 
     # Write-Host "Converting $($_.Name) to $TargetFilePath" -ForegroundColor Cyan
 
