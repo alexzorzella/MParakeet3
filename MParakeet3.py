@@ -1,5 +1,6 @@
 import configparser
 import itertools
+import re
 import shutil
 import subprocess
 from collections import defaultdict
@@ -134,13 +135,16 @@ def convert_and_partition():
 
     with ThreadPoolExecutor(max_workers=max_threads) as executor:
         futures = [executor.submit(run_ffmpeg, job_data) for job_data in job_datas]
-        for f in tqdm(as_completed(futures), total=len(futures), desc="Processing files", unit="file"):
+        for f in tqdm(as_completed(futures), total=len(futures), desc="Processing files", unit="file", ncols=100):
             result = f.result()
 
     logger.info(f"Found {len(audio_files)} files")
 
 def run_ffmpeg(job_data: JobData):
     job_data.destination_path.parent.mkdir(parents=True, exist_ok=True)
+
+    clean_title = re.sub(r"\s\([a-z0-9]+_(?:Opus|AAC)\)$", '', job_data.source_path.stem)
+    print(clean_title)
 
     command = [
         "ffmpeg",
@@ -149,7 +153,7 @@ def run_ffmpeg(job_data: JobData):
         "-codec:a", "libmp3lame",
         "-q:a", "0",
         "-map_metadata", "0",
-        # "-metadata", f"title={job_data.clean_title}",
+        "-metadata", f"title={clean_title}",
         "-id3v2_version", "3",
         "-y",
         str(job_data.destination_path)
