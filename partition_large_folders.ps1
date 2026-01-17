@@ -54,7 +54,13 @@ Get-ChildItem -Path $SourceFolder -Filter *.mp3 -Recurse | ForEach-Object {
 
 	$FormattedRange = "($Min-$Max)"
 
-	$TargetDir = Join-Path $OutputFolder "$RelativeDirectory $FormattedRange"
+	$FinalFolderName = $RelativeDirectory
+
+	if($TotalTracks -gt $MaxTracks) {
+		$FinalFolderName += " $FormattedRange"
+	}
+
+	$TargetDir = Join-Path $OutputFolder $FinalFolderName
 
 	$TargetFilePath = Join-Path $TargetDir $_.Name
     if (!(Test-Path $TargetDir)) { New-Item -ItemType Directory -Path $TargetDir -Force | Out-Null }

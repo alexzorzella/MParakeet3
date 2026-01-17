@@ -1,6 +1,29 @@
-$SourceFolder = Join-Path $PSScriptRoot "Music"
-$OutputFolder = Join-Path $PSScriptRoot "Converted_Music"
-$MaxThreads = 30
+function Get-IniContent ($Path) {
+    $ini = @{}
+    Get-Content -Path $Path | ForEach-Object {
+        $_ = $_.Trim()
+        if ($_ -notmatch '^(;|$|#)') {
+            if ($_ -match '^\[.*\]$') {
+                $section = $_ -replace '\[|\]'
+                $ini[$section] = @{}
+            } elseif ($section -and $_ -match '(.+?)=(.+)') {
+                $key, $value = $_ -split '\s*=\s*', 2
+                $ini[$section][$key] = $value
+            }
+        }
+    }
+    return $ini
+}
+
+$configFile = Join-Path $PSScriptRoot "config.ini"
+$configData = Get-IniContent -Path $configFile
+
+$SourceFolder = $configData["music"]["source"].Trim('"')
+$OutputFolder = $configData["music"]["output"].Trim('"')
+[int]$FolderTrackLimit = $configData["music"]["foldertracklimit"]
+[int]$MaxThreads = $configData["music"]["maxthreads"]
+
+Write-Host "Source: $SourceFolder, Output: $OutputFolder, FolderTrackLimit: $FolderTrackLimit, MaxThreads: $MaxThreads"
 
 if (!(Test-Path $OutputFolder)) { New-Item -ItemType Directory -Path $OutputFolder }
 
