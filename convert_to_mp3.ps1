@@ -132,6 +132,8 @@ Get-ChildItem -Path $SourceFolder -Include *.m4a, *.opus, *.mp3, *.flac, *.wav -
         # Write-Host "Metadata already exists for $currentTitle. Copying..." -ForegroundColor Gray
     }
 
+	Write-Host "Converting $cleanTitle ($($_.FullName)) to $TargetFilePath"
+
 	ffmpeg -i $_.FullName `
 		-codec:a libmp3lame -q:a 0 `
 		-map_metadata 0 `
