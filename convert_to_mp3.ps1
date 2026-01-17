@@ -72,7 +72,6 @@ Get-ChildItem -Path $SourceFolder -Include *.m4a, *.opus, *.mp3, *.flac, *.wav -
     $originalName = $_.BaseName
 
     $RelativePath = $_.FullName.Replace($using:SourceFolder, "").TrimStart("\")
-    # $TargetFilePath = Join-Path $using:OutputFolder $RelativePath
 
 	##############################################################
 
@@ -139,9 +138,9 @@ Get-ChildItem -Path $SourceFolder -Include *.m4a, *.opus, *.mp3, *.flac, *.wav -
 		-id3v2_version 3 `
 		-y $TargetFilePath
 
-	Write-Progress -Activity "Partitioning $SourceFolderName" `
+	Write-Progress -Activity "Parakeet $SourceFolderName" `
 				   -Status "($($using:ProcessedTracksBag.Count)/$using:TotalTrackCount) Complete, Copying $($_.Name)" `
 				   -PercentComplete ([math]::Round(($using:ProcessedTracksBag.Count) / $using:TotalTrackCount * 100))
 } -ThrottleLimit $MaxThreads
 
-Write-Host "`nAll files converted!" -ForegroundColor Green
+Write-Progress -Activity "Parakeet" -Completed
