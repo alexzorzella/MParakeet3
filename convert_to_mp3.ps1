@@ -104,9 +104,7 @@ Get-ChildItem -Path $SourceFolder -Include *.m4a, *.opus, *.mp3, *.flac, *.wav -
 
 	##############################################################
 
-	if (-not $TargetFilePath -contains ".mp3") {
-		$TargetFilePath = [System.IO.Path]::ChangeExtension($TargetFilePath, ".mp3")
-	}
+	$TargetFilePath = [System.IO.Path]::ChangeExtension($TargetFilePath, ".mp3")
 
     # $TargetDir = Split-Path $TargetFilePath
     if (!(Test-Path $TargetDir)) { New-Item -ItemType Directory -Path $TargetDir -Force }
@@ -132,9 +130,9 @@ Get-ChildItem -Path $SourceFolder -Include *.m4a, *.opus, *.mp3, *.flac, *.wav -
         # Write-Host "Metadata already exists for $currentTitle. Copying..." -ForegroundColor Gray
     }
 
-	Write-Host "Converting $cleanTitle ($($_.FullName)) to $TargetFilePath"
+	# Write-Host "Converting $cleanTitle ($($_.FullName)) to $TargetFilePath"
 
-	ffmpeg -i $_.FullName `
+	ffmpeg -loglevel error -i $_.FullName `
 		-codec:a libmp3lame -q:a 0 `
 		-map_metadata 0 `
 		-metadata title="$cleanTitle" `
