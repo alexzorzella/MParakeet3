@@ -15,42 +15,7 @@ from difflib import SequenceMatcher
 from pyfzf.pyfzf import FzfPrompt
 
 from ottlog import logger
-
-config_filename = "config.ini"
-
-def get_config_param(config_section, cast_to, param_name):
-    try:
-        return cast_to(config_section[param_name])
-    except:
-        error = f"{param_name} not found in {config_filename}."
-        logger.exception(error)
-
-        return None
-
-
-def parse_config():
-    config = configparser.ConfigParser()
-
-    config_path = Path(config_filename)
-
-    if not config_path.is_file():
-        error = f"{config_filename} not found. Please create a config file."
-
-        logger.error(error)
-        raise (FileNotFoundError(error))
-    else:
-        config.read(config_filename)
-
-        try:
-            import_section = config["mix"]
-        except:
-            return
-
-        search = get_config_param(config_section=import_section, cast_to=str, param_name="search")
-        mixout = get_config_param(config_section=import_section, cast_to=str, param_name="mixout")
-
-        return search, mixout
-
+from sconfig import parse_config
 
 def run_ffmpeg(track_num: int, mix_title: str, input_path: Path, output_path: Path):
     command = [
@@ -73,7 +38,9 @@ def main():
 
     args = parser.parse_args()
 
-    search, mix_out = parse_config()
+    config = parse_config(params=[("search", str), ("mixout", str)])
+    search, mix_out = config["search"], config["mix_out"]
+
     search = Path(search)
     mix_out = Path(mix_out)
 

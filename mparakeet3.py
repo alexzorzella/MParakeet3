@@ -13,10 +13,7 @@ from sconfig import parse_config
 
 def convert_and_partition():
     config_variables = parse_config(params=[("source", str), ("output", str), ("maxthreads", int), ("foldertracklimit", int)])
-    source = config_variables["source"]
-    destination = config_variables["output"]
-    max_threads = config_variables["maxthreads"]
-    folder_track_limit = config_variables["foldertracklimit"]
+    source, destination, max_threads, folder_track_limit = config_variables["source"], config_variables["output"], config_variables["maxthreads"], config_variables["foldertracklimit"]
 
     destination = Path(destination)
 
