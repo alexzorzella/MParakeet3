@@ -1,16 +1,19 @@
-import configparser
-import logging.config
 import re
-import subprocess
 import time
-from collections import defaultdict
-from pathlib import Path
-import pathvalidate
-from pyfzf.pyfzf import FzfPrompt
-from mutagen.easyid3 import EasyID3
-from mutagen.mp3 import MP3
 import argparse
+import subprocess
+import configparser
+import pathvalidate
+
+import logging.config
+from pathlib import Path
+from collections import defaultdict
+
+from mutagen.mp3 import MP3
+from mutagen.easyid3 import EasyID3
+
 from difflib import SequenceMatcher
+from pyfzf.pyfzf import FzfPrompt
 
 config_filename = "config.ini"
 
