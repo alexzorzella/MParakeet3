@@ -156,7 +156,7 @@ def main():
             time_struct = time.gmtime(total_length)
             total_length_as_str = time.strftime("%M:%S", time_struct)
 
-            empty = ""
+            empty = "Mix length"
             print(f"{empty.ljust(longest_title)} ({total_length_as_str})")
 
             input("Press enter to continue...")
