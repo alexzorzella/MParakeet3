@@ -96,15 +96,15 @@ def run_ffmpeg(track_num: int, mix_title: str, input_path: Path, output_path: Pa
     subprocess.run(command, shell=True)
 
 def main():
-    search, mixout = parse_config()
+    search, mix_out = parse_config()
     search = Path(search)
-    mixout = Path(mixout)
+    mix_out = Path(mix_out)
 
     if not search.exists() or not search.is_dir():
         logger.error(f"Search directory does not exist: {search}")
         return
 
-    mixout.mkdir(parents=True, exist_ok=True)
+    mix_out.mkdir(parents=True, exist_ok=True)
 
     mix_title = ""
     while mix_title.strip() == "":
@@ -177,7 +177,7 @@ def main():
         selected = file_name_to_audio_file[selected]
         mix.append(selected)
 
-    output_mix_path = mixout / mix_title
+    output_mix_path = mix_out / mix_title
     output_mix_path.mkdir(parents=True, exist_ok=True)
     for i, file in enumerate(mix):
         filepath = Path(file.filename)
