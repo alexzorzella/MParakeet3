@@ -39,7 +39,7 @@ def main():
     args = parser.parse_args()
 
     config = parse_config(section="mix", params=[("search", str), ("mixout", str)])
-    search, mix_out = config["search"], config["mix_out"]
+    search, mix_out = config["search"], config["mixout"]
 
     search = Path(search)
     mix_out = Path(mix_out)
