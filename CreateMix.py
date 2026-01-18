@@ -127,6 +127,7 @@ def main():
                 print(f"{i+1:02}. {song.name}")
 
             input("Press enter to continue...")
+            continue
         selected = Path(selected)
         mix.append(selected)
 
