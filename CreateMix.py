@@ -135,19 +135,28 @@ def main():
         loaded_mix_path = Path(args.load_mix)
 
         if loaded_mix_path.is_file():
-            print(f"Loaded {len(mix)} tracks from {loaded_mix_path.name}")
+            mix_title = loaded_mix_path.stem
+
+            with open(loaded_mix_path, 'r') as file:
+                for line in file:
+                    processed_line = line.strip()
+
+                    track = next((audio_track for audio_track in audio_files if Path(audio_track.filename).stem == processed_line), None)
+                    mix.append(track)
+
+            input(f"Loaded {len(mix)} tracks from {mix_title}.\nPress enter to continue ")
         elif loaded_mix_path.is_dir():
+            mix_title = loaded_mix_path.stem
+
             mix_tracks = list(loaded_mix_path.rglob("*.mp3"))
             mix_audio_files = [MP3(file, ID3=EasyID3) for file in mix_tracks]
 
             for audio_file in mix_audio_files:
                 mix.append(file_name_to_audio_file[audio_file.get('Title', 'Unknown Title')[0]])
 
-            mix_title = loaded_mix_path.stem
-
-            print(f"Loaded {len(mix)} tracks from {mix_title}")
+            input(f"Loaded {len(mix)} tracks from {mix_title}")
         else:
-            print(f"Didn't find a file or directory to load a mix from at {loaded_mix_path}")
+            print(f"Didn't find a file or directory to load a mix from at {loaded_mix_path}.\nPress enter to continue ")
 
     ###########################################################################################
 
