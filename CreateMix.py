@@ -139,11 +139,13 @@ def main():
 
         if selected == SHOW:
             for i, song in enumerate(mix):
+                longest_title = max(len(song.get('Title', 'Unknown Title')[0]) for song in mix) + 5
+
                 song_title = song.get('Title', 'Unknown Title')[0]
                 song_struct = time.gmtime(song.info.length)
                 song_length = time.strftime("%M:%S", song_struct)
 
-                print(f"{i+1:02}. {song_title} ({song_length})")
+                print(f"{i+1:02}. {song_title.ljust(longest_title)} ({song_length})")
 
             input("Press enter to continue...")
             continue
@@ -152,7 +154,6 @@ def main():
         elif selected == EXIT:
             return
 
-        # selected = Path(file_name_to_audio_file[selected].filename)
         selected = file_name_to_audio_file[selected]
         mix.append(selected)
 
