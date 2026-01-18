@@ -1,6 +1,7 @@
 import configparser
 import logging.config
 import subprocess
+import time
 from collections import defaultdict
 from pathlib import Path
 import pathvalidate
@@ -112,7 +113,6 @@ def main():
     files = list(search.rglob("*.mp3"))
 
     audio_files = [ MP3(file, ID3=EasyID3) for file in files ]
-    # file_names = [ audio_file.get('Title', 'Unknown Title')[0] for audio_file in audio_files ]
     file_names = []
 
     file_name_to_audio_file = defaultdict()
@@ -125,32 +125,41 @@ def main():
 
     EXIT = ".exit"
     SHOW = ".show"
-    options = [*file_names, EXIT, SHOW]
+    SAVE_AND_CLOSE = ".save"
+
+    options = [*file_names, SHOW, SAVE_AND_CLOSE, EXIT ]
     fzf = FzfPrompt()
 
-    mix: list[Path] = []
+    mix = []
     while True:
         selected = fzf.prompt(options)
         if len(selected) != 1:
             continue
         selected = selected[0]
-        if selected == EXIT:
-            break
+
         if selected == SHOW:
             for i, song in enumerate(mix):
-                print(f"{i+1:02}. {song.name}")
+                song_title = song.get('Title', 'Unknown Title')[0]
+                song_struct = time.gmtime(song.info.length)
+                song_length = time.strftime("%M:%S", song_struct)
+
+                print(f"{i+1:02}. {song_title} ({song_length})")
 
             input("Press enter to continue...")
             continue
+        elif selected == SAVE_AND_CLOSE:
+            break
+        elif selected == EXIT:
+            return
 
-        # selected = Path(selected)
-        selected = Path(file_name_to_audio_file[selected].filepath)
+        # selected = Path(file_name_to_audio_file[selected].filename)
+        selected = file_name_to_audio_file[selected]
         mix.append(selected)
 
     output_mix_path = mixout / mix_title
     output_mix_path.mkdir(parents=True, exist_ok=True)
     for i, file in enumerate(mix):
-        output_path = output_mix_path / file.name
+        output_path = output_mix_path / file_name_to_audio_file[file].name
         run_ffmpeg(track_num=i + 1, mix_title=mix_title, input_path=file, output_path=output_path)
 
 
