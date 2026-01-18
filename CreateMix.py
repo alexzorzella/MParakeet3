@@ -174,7 +174,7 @@ def main():
             longest_title = max(len(song.get('Title', 'Unknown Title')[0]) for song in mix) + 10
             total_length: float = 0
 
-            index_format = "00" if len(mix) >= 10 else "0"
+            index_format = "02" if len(mix) >= 10 else "0"
             padding = re.sub('.', ' ', f"{len(mix):{index_format}}. ")
 
             title_a = "Song Title"
@@ -185,14 +185,14 @@ def main():
                 song_title = song.get('Title', 'Unknown Title')[0]
                 song_length = song.info.length
                 time_struct = time.gmtime(song_length)
-                song_length_as_str = time.strftime("%M:%S", time_struct)
+                song_length_as_str = time.strftime("%H:%M:%S", time_struct)
 
                 total_length += song_length
 
                 print(f"{i+1:{index_format}}. {song_title.ljust(longest_title, '.')} ({song_length_as_str})")
 
             time_struct = time.gmtime(total_length)
-            total_length_as_str = time.strftime("%M:%S", time_struct)
+            total_length_as_str = time.strftime("%H:%M:%S", time_struct)
 
             length_prompt = "Total"
             print(f"{padding}{length_prompt.ljust(longest_title, '.')} ({total_length_as_str})\n")
