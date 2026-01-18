@@ -13,8 +13,8 @@ def get_config_param(config_filename, config_section, cast_to, param_name):
 
         return None
 
-def parse_config(config_filename="config.ini", params: list[tuple[str, type]] | None = None):
-    if params is None or len(params) <= 0:
+def parse_config(config_filename="config.ini", section="", params: list[tuple[str, type]] | None = None):
+    if params is None or len(params) <= 0 or section == "":
         return []
 
     config = configparser.ConfigParser()
@@ -30,7 +30,7 @@ def parse_config(config_filename="config.ini", params: list[tuple[str, type]] | 
         config.read(config_filename)
 
         try:
-            import_section = config["music"]
+            import_section = config[section]
         except:
             return []
 
