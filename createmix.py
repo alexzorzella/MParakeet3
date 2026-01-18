@@ -5,7 +5,6 @@ import subprocess
 import configparser
 import pathvalidate
 
-import logging.config
 from pathlib import Path
 from collections import defaultdict
 
@@ -15,41 +14,9 @@ from mutagen.easyid3 import EasyID3
 from difflib import SequenceMatcher
 from pyfzf.pyfzf import FzfPrompt
 
+from ottlog import logger
+
 config_filename = "config.ini"
-
-logging.config.dictConfig(
-    {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "simple": {
-                "format": "[%(asctime)s .%(msecs)03d|%(levelname)s|%(name)s|%(filename)s:%(lineno)d] %(message)s",
-                "datefmt": "%Y-%m-%dT%H:%M:%S%z",
-            }
-        },
-        "handlers": {
-            "stdout": {
-                "class": "logging.StreamHandler",
-                "formatter": "simple",
-                "stream": "ext://sys.stdout",
-                # "level": "WARNING",
-                # "level": "INFO",
-                "level": "DEBUG",
-            },
-        },
-        "loggers": {
-            "root": {
-                "level": "DEBUG",
-                "handlers": [
-                    "stdout",
-                ],
-            }
-        },
-    }
-)
-
-logger = logging.getLogger("createmix")
-
 
 def get_config_param(config_section, cast_to, param_name):
     try:
