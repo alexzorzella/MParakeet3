@@ -12,8 +12,8 @@ from jobdata import JobData
 from sconfig import parse_config
 
 def convert_and_partition():
-    config_variables = parse_config(section="music", params=[("source", str), ("output", str), ("maxthreads", int), ("foldertracklimit", int)])
-    source, destination, max_threads, folder_track_limit = config_variables["source"], config_variables["output"], config_variables["maxthreads"], config_variables["foldertracklimit"]
+    config_variables = parse_config(section="music", params=[("search", str), ("output", str), ("maxthreads", int), ("foldertracklimit", int)])
+    source, destination, max_threads, folder_track_limit = config_variables["search"], config_variables["output"], config_variables["maxthreads"], config_variables["foldertracklimit"]
 
     destination = Path(destination)
 

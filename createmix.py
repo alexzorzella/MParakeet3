@@ -37,23 +37,24 @@ def main():
     parser.add_argument("-l", "--load-mix", type=str, help="Load a mix from a directory or file")
     parser.add_argument("-s", "--search", type=str, help="Search from directory")
     parser.add_argument("-o", "--output", type=str, help="Output to directory")
+    parser.add_argument("-n", "--name", type=str, help="Mix name")
 
     args = parser.parse_args()
 
     arg_search = args.search
     arg_output = args.output
 
-    config = parse_config_with_defaults(section="mix", params=[("search", str, arg_search), ("mixout", str, arg_output)])
-    search, mix_out = config["search"], config["mixout"]
+    config = parse_config_with_defaults(section="mix", params=[("search", str, arg_search), ("output", str, arg_output)])
+    search, output = config["search"], config["output"]
 
     search = Path(search)
-    mix_out = Path(mix_out)
+    output = Path(output)
 
     if not search.exists() or not search.is_dir():
         logger.error(f"Search directory does not exist: {search}")
         return
 
-    mix_out.mkdir(parents=True, exist_ok=True)
+    output.mkdir(parents=True, exist_ok=True)
 
     files = list(search.rglob("*.mp3"))
 
@@ -68,7 +69,7 @@ def main():
         file_names.append(track_name)
         file_name_to_audio_file[track_name] = audio_file
 
-    mix_title = ""
+    mix_title = "" if args.name is None else args.name
     mix = []
 
     ###########################################################################################
@@ -106,14 +107,14 @@ def main():
 
     ###########################################################################################
 
-    ok = input(f"Searching {search} and outputting to {mix_out}. OK? (y/n): ")
-
-    if ok.lower() != "y":
-        return
-
     while mix_title.strip() == "":
         inp = input("Enter mix title :3 : ")
         mix_title = pathvalidate.sanitize_filename(inp).strip()
+
+    ok = input(f"Searching {search} and outputting to {output / mix_title}. OK? (y/n): ")
+
+    if ok.lower() != "y":
+        return
 
     EXIT = ".exit"
     SHOW = ".show"
@@ -167,7 +168,7 @@ def main():
         selected = file_name_to_audio_file[selected]
         mix.append(selected)
 
-    output_mix_path = mix_out / mix_title
+    output_mix_path = output / mix_title
     output_mix_path.mkdir(parents=True, exist_ok=True)
     for i, file in enumerate(mix):
         filepath = Path(file.filename)
