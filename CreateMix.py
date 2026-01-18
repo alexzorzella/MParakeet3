@@ -138,14 +138,26 @@ def main():
         selected = selected[0]
 
         if selected == SHOW:
+            print()
+
+            longest_title = max(len(song.get('Title', 'Unknown Title')[0]) for song in mix) + 5
+            total_length: float = 0
+
             for i, song in enumerate(mix):
-                longest_title = max(len(song.get('Title', 'Unknown Title')[0]) for song in mix) + 5
 
                 song_title = song.get('Title', 'Unknown Title')[0]
-                song_struct = time.gmtime(song.info.length)
-                song_length = time.strftime("%M:%S", song_struct)
+                time_struct = time.gmtime(song.info.length)
+                song_length = time.strftime("%M:%S", time_struct)
+
+                total_length += song_length
 
                 print(f"{i+1:02}. {song_title.ljust(longest_title)} ({song_length})")
+
+            time_struct = time.gmtime(total_length)
+            total_length_as_str = time.strftime("%M:%S", time_struct)
+
+            empty = ""
+            print(f"{empty.ljust(longest_title)} ({total_length_as_str})")
 
             input("Press enter to continue...")
             continue
