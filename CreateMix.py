@@ -102,16 +102,6 @@ def main():
 
     args = parser.parse_args()
 
-    if args.load_mix is not None:
-        loaded_mix_path = Path(args.load_mix)
-
-        if loaded_mix_path.is_file():
-            print(f"Loading mix from {loaded_mix_path.name}")
-        elif loaded_mix_path.is_dir():
-            print(f"Loading mix from {loaded_mix_path}")
-        else:
-            print(f"Didn't find a file or directory to load a mix from at {loaded_mix_path}")
-
     search, mix_out = parse_config()
     search = Path(search)
     mix_out = Path(mix_out)
@@ -122,10 +112,6 @@ def main():
 
     mix_out.mkdir(parents=True, exist_ok=True)
 
-    mix_title = ""
-    while mix_title.strip() == "":
-        inp = input("Enter mix title :3 : ")
-        mix_title = pathvalidate.sanitize_filename(inp).strip()
 
     files = list(search.rglob("*.mp3"))
 
@@ -140,6 +126,35 @@ def main():
         file_names.append(track_name)
         file_name_to_audio_file[track_name] = audio_file
 
+    mix_title = ""
+    mix = []
+
+    ###########################################################################################
+
+    if args.load_mix is not None:
+        loaded_mix_path = Path(args.load_mix)
+
+        if loaded_mix_path.is_file():
+            print(f"Loaded {len(mix)} tracks from {loaded_mix_path.name}")
+        elif loaded_mix_path.is_dir():
+            mix_tracks = list(loaded_mix_path.rglob("*.mp3"))
+            mix_audio_files = [MP3(file, ID3=EasyID3) for file in mix_tracks]
+
+            for audio_file in mix_audio_files:
+                mix.append(file_name_to_audio_file[audio_file.get('Title', 'Unknown Title')[0]])
+
+            mix_title = loaded_mix_path.stem
+
+            print(f"Loaded {len(mix)} tracks from {mix_title}")
+        else:
+            print(f"Didn't find a file or directory to load a mix from at {loaded_mix_path}")
+
+    ###########################################################################################
+
+    while mix_title.strip() == "":
+        inp = input("Enter mix title :3 : ")
+        mix_title = pathvalidate.sanitize_filename(inp).strip()
+
     EXIT = ".exit"
     SHOW = ".show"
     SAVE_AND_CLOSE = ".save"
@@ -147,7 +162,6 @@ def main():
     options = [*file_names, SHOW, SAVE_AND_CLOSE, EXIT ]
     fzf = FzfPrompt()
 
-    mix = []
     while True:
         selected = fzf.prompt(options)
         if len(selected) != 1:
