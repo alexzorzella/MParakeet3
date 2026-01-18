@@ -10,6 +10,7 @@ from pyfzf.pyfzf import FzfPrompt
 from mutagen.easyid3 import EasyID3
 from mutagen.mp3 import MP3
 import argparse
+from difflib import SequenceMatcher
 
 config_filename = "config.ini"
 
@@ -141,10 +142,13 @@ def main():
                 for line in file:
                     processed_line = line.strip()
 
-                    track = next((audio_track for audio_track in audio_files if Path(audio_track.filename).stem == processed_line), None)
-                    mix.append(track)
+                    tracks = (audio_track for audio_track in audio_files if SequenceMatcher(None, Path(audio_track.filename).stem.lower(), processed_line.lower()).ratio() >= 0.5)
+                    track = next(tracks, None)
 
-            input(f"Loaded {len(mix)} tracks from {mix_title}.\nPress enter to continue ")
+                    if track is not None:
+                        mix.append(track)
+
+            input(f"Loaded {len(mix)} tracks from {mix_title}.\nPress enter to continue")
         elif loaded_mix_path.is_dir():
             mix_title = loaded_mix_path.stem
 
@@ -156,7 +160,7 @@ def main():
 
             input(f"Loaded {len(mix)} tracks from {mix_title}")
         else:
-            print(f"Didn't find a file or directory to load a mix from at {loaded_mix_path}.\nPress enter to continue ")
+            print(f"Didn't find a file or directory to load a mix from at {loaded_mix_path}.\nPress enter to continue")
 
     ###########################################################################################
 
