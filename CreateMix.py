@@ -142,8 +142,6 @@ def main():
                 for line in file:
                     processed_line = line.strip()
 
-                    print(processed_line)
-
                     tracks = (audio_track for audio_track in audio_files
                               if SequenceMatcher(None, audio_track.get('Title', 'Unknown Title')[0], processed_line).ratio() >= 0.8)
                     track = next(tracks, None)
