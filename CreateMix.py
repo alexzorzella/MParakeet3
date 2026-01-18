@@ -9,6 +9,7 @@ import pathvalidate
 from pyfzf.pyfzf import FzfPrompt
 from mutagen.easyid3 import EasyID3
 from mutagen.mp3 import MP3
+import argparse
 
 config_filename = "config.ini"
 
@@ -96,6 +97,21 @@ def run_ffmpeg(track_num: int, mix_title: str, input_path: Path, output_path: Pa
     subprocess.run(command, shell=True)
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-l", "--load-mix", type=str, help="Load a mix from a directory or file")
+
+    args = parser.parse_args()
+
+    if args.load_mix is not None:
+        loaded_mix_path = Path(args.load_mix)
+
+        if loaded_mix_path.is_file():
+            print(f"Loading mix from {loaded_mix_path.name}")
+        elif loaded_mix_path.is_dir():
+            print(f"Loading mix from {loaded_mix_path}")
+        else:
+            print(f"Didn't find a file or directory to load a mix from at {loaded_mix_path}")
+
     search, mix_out = parse_config()
     search = Path(search)
     mix_out = Path(mix_out)
