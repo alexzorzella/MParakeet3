@@ -1,5 +1,6 @@
 import configparser
 import logging.config
+import re
 import subprocess
 import time
 from collections import defaultdict
@@ -140,11 +141,17 @@ def main():
         if selected == SHOW:
             print()
 
-            longest_title = max(len(song.get('Title', 'Unknown Title')[0]) for song in mix) + 5
+            longest_title = max(len(song.get('Title', 'Unknown Title')[0]) for song in mix) + 10
             total_length: float = 0
 
-            for i, song in enumerate(mix):
+            index_format = "00" if len(mix) >= 10 else "0"
+            padding = re.sub('.', ' ', f"{len(mix):{index_format}}. ")
 
+            title_a = "Song Title"
+            title_b = "Length"
+            print(f"{padding}{title_a.ljust(longest_title)} {title_b}")
+
+            for i, song in enumerate(mix):
                 song_title = song.get('Title', 'Unknown Title')[0]
                 song_length = song.info.length
                 time_struct = time.gmtime(song_length)
@@ -152,13 +159,13 @@ def main():
 
                 total_length += song_length
 
-                print(f"{i+1:02}. {song_title.ljust(longest_title)} ({song_length_as_str})")
+                print(f"{i+1:{index_format}}. {song_title.ljust(longest_title, '.')} ({song_length_as_str})")
 
             time_struct = time.gmtime(total_length)
             total_length_as_str = time.strftime("%M:%S", time_struct)
 
-            empty = "Mix length"
-            print(f"{empty.ljust(longest_title)} ({total_length_as_str})")
+            length_prompt = "Total"
+            print(f"{padding}{length_prompt.ljust(longest_title, '.')} ({total_length_as_str})\n")
 
             input("Press enter to continue...")
             continue
