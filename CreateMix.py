@@ -1,10 +1,12 @@
 import configparser
 import logging.config
 import subprocess
+from collections import defaultdict
 from pathlib import Path
-
 import pathvalidate
 from pyfzf.pyfzf import FzfPrompt
+from mutagen.easyid3 import EasyID3
+from mutagen.mp3 import MP3
 
 config_filename = "config.ini"
 
@@ -91,7 +93,6 @@ def run_ffmpeg(track_num: int, mix_title: str, input_path: Path, output_path: Pa
     ]
     subprocess.run(command, shell=True)
 
-
 def main():
     search, mixout = parse_config()
     search = Path(search)
@@ -105,13 +106,26 @@ def main():
 
     mix_title = ""
     while mix_title.strip() == "":
-        inp = input("Enter mix title :3 :")
+        inp = input("Enter mix title :3 : ")
         mix_title = pathvalidate.sanitize_filename(inp).strip()
 
     files = list(search.rglob("*.mp3"))
+
+    audio_files = [ MP3(file, ID3=EasyID3) for file in files ]
+    # file_names = [ audio_file.get('Title', 'Unknown Title')[0] for audio_file in audio_files ]
+    file_names = []
+
+    file_name_to_audio_file = defaultdict()
+
+    for audio_file in audio_files:
+        track_name = audio_file.get('Title', 'Unknown Title')[0]
+
+        file_names.append(track_name)
+        file_name_to_audio_file[track_name] = audio_file
+
     EXIT = ".exit"
     SHOW = ".show"
-    options = [*files, EXIT, SHOW]
+    options = [*file_names, EXIT, SHOW]
     fzf = FzfPrompt()
 
     mix: list[Path] = []
@@ -128,7 +142,9 @@ def main():
 
             input("Press enter to continue...")
             continue
-        selected = Path(selected)
+
+        # selected = Path(selected)
+        selected = Path(file_name_to_audio_file[selected].filepath)
         mix.append(selected)
 
     output_mix_path = mixout / mix_title

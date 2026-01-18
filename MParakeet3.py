@@ -90,6 +90,12 @@ def convert_and_partition():
     destination = Path(destination)
 
     if destination.exists() and destination.is_dir():
+        delete_directory = input(f"A folder already exists at {destination}.\n"
+                                 f"Type 'yes' to delete the directory and continue: ")
+
+        if delete_directory != "yes":
+            return
+
         shutil.rmtree(destination)
 
     destination.mkdir(parents=True, exist_ok=True)
@@ -138,7 +144,9 @@ def convert_and_partition():
         for f in tqdm(as_completed(futures), total=len(futures), desc="Processing files", unit="file", ncols=100):
             result = f.result()
 
-    logger.info(f"Found {len(audio_files)} files")
+    print(f"Converted {len(audio_files)} audio files!")
+
+    # logger.info(f"Found {len(audio_files)} files")
 
 def run_ffmpeg(job_data: JobData):
     job_data.destination_path.parent.mkdir(parents=True, exist_ok=True)
