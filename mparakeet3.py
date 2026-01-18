@@ -1,91 +1,22 @@
-import configparser
-import itertools
 import re
 import shutil
+import itertools
 import subprocess
-from collections import defaultdict
-from dataclasses import dataclass
 from pathlib import Path
-import logging.config
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from tqdm import tqdm
 
-config_filename = "config.ini"
-
-logging.config.dictConfig(
-    {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "simple": {
-                "format": "[%(asctime)s .%(msecs)03d|%(levelname)s|%(name)s|%(filename)s:%(lineno)d] %(message)s",
-                "datefmt": "%Y-%m-%dT%H:%M:%S%z",
-            }
-        },
-        "handlers": {
-            "stdout": {
-                "class": "logging.StreamHandler",
-                "formatter": "simple",
-                "stream": "ext://sys.stdout",
-                # "level": "WARNING",
-                "level": "INFO",
-                # "level": "DEBUG",
-            },
-        },
-        "loggers": {
-            "root": {
-                "level": "DEBUG",
-                "handlers": [
-                    "stdout",
-                ],
-            }
-        },
-    }
-)
-
-logger = logging.getLogger("mparakeet3")
-
-def get_config_param(config_section, cast_to, param_name):
-    try:
-        return cast_to(config_section[param_name])
-    except:
-        error = f"{param_name} not found in {config_filename}."
-        logger.exception(error)
-
-        return None
-
-def parse_config():
-    config = configparser.ConfigParser()
-
-    config_path = Path(config_filename)
-
-    if not config_path.is_file():
-        error = f"{config_filename} not found. Please create a config file."
-
-        logger.error(error)
-        raise (FileNotFoundError(error))
-    else:
-        config.read(config_filename)
-
-        try:
-            import_section = config["music"]
-        except:
-            return
-
-        source = get_config_param(config_section=import_section, cast_to=str, param_name="source")
-        output = get_config_param(config_section=import_section, cast_to=str, param_name="output")
-        max_threads = get_config_param(config_section=import_section, cast_to=int, param_name="maxthreads")
-        folder_track_limit = get_config_param(config_section=import_section, cast_to=int, param_name="foldertracklimit")
-
-        return source, output, max_threads, folder_track_limit
-
-@dataclass (frozen=True)
-class JobData:
-    source_path: Path
-    destination_path: Path
+from jobdata import JobData
+from sconfig import parse_config
 
 def convert_and_partition():
-    source, destination, max_threads, folder_track_limit = parse_config()
+    config_variables = parse_config(params=[("source", str), ("output", str), ("maxthreads", int), ("foldertracklimit", int)])
+    source = config_variables["source"]
+    destination = config_variables["output"]
+    max_threads = config_variables["maxthreads"]
+    folder_track_limit = config_variables["foldertracklimit"]
 
     destination = Path(destination)
 
