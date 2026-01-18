@@ -144,7 +144,6 @@ def run_ffmpeg(job_data: JobData):
     job_data.destination_path.parent.mkdir(parents=True, exist_ok=True)
 
     clean_title = re.sub(r"\s\([a-z0-9]+_(?:Opus|AAC)\)$", '', job_data.source_path.stem)
-    print(clean_title)
 
     command = [
         "ffmpeg",
