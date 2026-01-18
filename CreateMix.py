@@ -159,8 +159,9 @@ def main():
     output_mix_path = mixout / mix_title
     output_mix_path.mkdir(parents=True, exist_ok=True)
     for i, file in enumerate(mix):
-        output_path = output_mix_path / file_name_to_audio_file[file].name
-        run_ffmpeg(track_num=i + 1, mix_title=mix_title, input_path=file, output_path=output_path)
+        filepath = Path(file.filename)
+        output_path = output_mix_path / filepath.name
+        run_ffmpeg(track_num=i + 1, mix_title=mix_title, input_path=filepath, output_path=output_path)
 
 
 if __name__ == "__main__":
