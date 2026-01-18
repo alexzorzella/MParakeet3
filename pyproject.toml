@@ -1,0 +1,12 @@
+[project]
+name = "mparakeet3"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.14"
+dependencies = [
+    "fuzzywuzzy>=0.18.0",
+    "mutagen>=1.47.0",
+    "pathvalidate>=3.3.1",
+    "pyfzf>=0.3.1",
+    "tqdm>=4.67.1",
+]
