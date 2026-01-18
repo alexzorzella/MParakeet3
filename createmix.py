@@ -2,7 +2,6 @@ import re
 import time
 import argparse
 import subprocess
-import configparser
 import pathvalidate
 
 from pathlib import Path
@@ -41,10 +40,7 @@ def main():
 
     args = parser.parse_args()
 
-    arg_search = args.search
-    arg_output = args.output
-
-    config = parse_config_with_defaults(section="mix", params=[("search", str, arg_search), ("output", str, arg_output)])
+    config = parse_config_with_defaults(section="mix", params=[("search", str, args.search), ("output", str, args.output)])
     search, output = config["search"], config["output"]
 
     search = Path(search)

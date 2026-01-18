@@ -1,5 +1,7 @@
 import re
+import math
 import shutil
+import argparse
 import itertools
 import subprocess
 from pathlib import Path
@@ -9,11 +11,28 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
 from jobdata import JobData
-from sconfig import parse_config
+from sconfig import parse_config_with_defaults
 
 def convert_and_partition():
-    config_variables = parse_config(section="music", params=[("search", str), ("output", str), ("maxthreads", int), ("foldertracklimit", int)])
-    source, destination, max_threads, folder_track_limit = config_variables["search"], config_variables["output"], config_variables["maxthreads"], config_variables["foldertracklimit"]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--source", type=str, help="Music directory")
+    parser.add_argument("-o", "--output", type=str, help="Output directory")
+    parser.add_argument("-t", "--max-threads", type=str, help="The number of CPUs to use")
+    parser.add_argument("-l", "--folder-track-limit", type=str, help="The maximum number of tracks per folder")
+
+    args = parser.parse_args()
+
+    config_variables = (
+        parse_config_with_defaults(section="music", params=[("source", str, args.source), ("output", str, args.output), ("maxthreads", int, args.max_threads), ("foldertracklimit", int, args.folder_track_limit)]))
+    source, destination, max_threads, folder_track_limit = config_variables["source"], config_variables["output"], config_variables["maxthreads"], config_variables["foldertracklimit"]
+
+    if folder_track_limit is None:
+        folder_track_limit = math.inf
+
+    ok = input(f"Copying and converting music from {source} to {destination} using {max_threads} threads with a {folder_track_limit} track limit per folder. OK? (y/n): ")
+
+    if ok.lower() != "y":
+        return
 
     destination = Path(destination)
 
@@ -41,14 +60,10 @@ def convert_and_partition():
 
         folder_track_map[source_folder].append(filename)
 
-        # logger.info(file)
-
     folder_track_map_partitioned = defaultdict(list)
 
     for source_folder, songs in folder_track_map.items():
         folder_track_map_partitioned[source_folder] = list(itertools.batched(songs, folder_track_limit))
-
-        # logger.info(f"{source_folder}: {len(songs)} songs")
 
     job_datas = []
 
