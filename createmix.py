@@ -15,7 +15,7 @@ from difflib import SequenceMatcher
 from pyfzf.pyfzf import FzfPrompt
 
 from ottlog import logger
-from sconfig import parse_config
+from sconfig import parse_config_with_defaults
 
 def run_ffmpeg(track_num: int, mix_title: str, input_path: Path, output_path: Path):
     command = [
@@ -35,10 +35,15 @@ def run_ffmpeg(track_num: int, mix_title: str, input_path: Path, output_path: Pa
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--load-mix", type=str, help="Load a mix from a directory or file")
+    parser.add_argument("-s", "--search", type=str, help="Search from directory")
+    parser.add_argument("-o", "--output", type=str, help="Output to directory")
 
     args = parser.parse_args()
 
-    config = parse_config(section="mix", params=[("search", str), ("mixout", str)])
+    arg_search = args.search
+    arg_output = args.output
+
+    config = parse_config_with_defaults(section="mix", params=[("search", str, arg_search), ("mixout", str, arg_output)])
     search, mix_out = config["search"], config["mixout"]
 
     search = Path(search)
@@ -49,7 +54,6 @@ def main():
         return
 
     mix_out.mkdir(parents=True, exist_ok=True)
-
 
     files = list(search.rglob("*.mp3"))
 
@@ -86,7 +90,7 @@ def main():
                     if track is not None:
                         mix.append(track)
 
-            input(f"Loaded {len(mix)} tracks from {mix_title}.\nPress enter to continue")
+            print(f"Loaded {len(mix)} tracks from {mix_title}.\nPress enter to continue")
         elif loaded_mix_path.is_dir():
             mix_title = loaded_mix_path.stem
 
@@ -96,11 +100,16 @@ def main():
             for audio_file in mix_audio_files:
                 mix.append(file_name_to_audio_file[audio_file.get('Title', 'Unknown Title')[0]])
 
-            input(f"Loaded {len(mix)} tracks from {mix_title}")
+            print(f"Loaded {len(mix)} tracks from {mix_title}")
         else:
             print(f"Didn't find a file or directory to load a mix from at {loaded_mix_path}.\nPress enter to continue")
 
     ###########################################################################################
+
+    ok = input(f"Searching {search} and outputting to {mix_out}. OK? (y/n): ")
+
+    if ok.lower() != "y":
+        return
 
     while mix_title.strip() == "":
         inp = input("Enter mix title :3 : ")
