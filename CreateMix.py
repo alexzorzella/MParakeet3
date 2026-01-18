@@ -146,12 +146,13 @@ def main():
             for i, song in enumerate(mix):
 
                 song_title = song.get('Title', 'Unknown Title')[0]
-                time_struct = time.gmtime(song.info.length)
-                song_length = time.strftime("%M:%S", time_struct)
+                song_length = song.info.length
+                time_struct = time.gmtime(song_length)
+                song_length_as_str = time.strftime("%M:%S", time_struct)
 
                 total_length += song_length
 
-                print(f"{i+1:02}. {song_title.ljust(longest_title)} ({song_length})")
+                print(f"{i+1:02}. {song_title.ljust(longest_title)} ({song_length_as_str})")
 
             time_struct = time.gmtime(total_length)
             total_length_as_str = time.strftime("%M:%S", time_struct)
