@@ -69,7 +69,7 @@ def parse_config():
         config.read(config_filename)
 
         try:
-            import_section = config["music"]
+            import_section = config["mix"]
         except:
             return
 
