@@ -14,6 +14,9 @@ def get_config_param(config_filename, config_section, cast_to, param_name):
         return None
 
 def parse_config(config_filename="config.ini", section="", params: list[tuple[str, type]] | None = None):
+    return parse_config_with_defaults(config_filename=config_filename, section=section, params=[(item[0], item[1], None) for item in params])
+
+def parse_config_with_defaults(config_filename="config.ini", section="", params: list[tuple[str, type, object]] | None = None):
     if params is None or len(params) <= 0 or section == "":
         return []
 
@@ -37,10 +40,15 @@ def parse_config(config_filename="config.ini", section="", params: list[tuple[st
         results = defaultdict()
 
         for parameter in params:
-            name = parameter[0]
-            type = parameter[1]
+            param_name = parameter[0]
+            param_type = parameter[1]
+            param_default = parameter[2]
 
-            cast_variable = get_config_param(config_filename=config_filename, config_section=import_section, cast_to=type, param_name=name)
-            results[name] = cast_variable
+            if param_default is not None:
+                cast_variable = param_default
+            else:
+                cast_variable = get_config_param(config_filename=config_filename, config_section=import_section, cast_to=param_type, param_name=param_name)
+
+            results[param_name] = cast_variable
 
         return results
