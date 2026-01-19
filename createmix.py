@@ -1,7 +1,6 @@
 import re
 import time
 import argparse
-import subprocess
 import pathvalidate
 
 from pathlib import Path
@@ -15,21 +14,7 @@ from pyfzf.pyfzf import FzfPrompt
 
 from ottlog import logger
 from sconfig import parse_config_with_defaults
-
-def run_ffmpeg(track_num: int, mix_title: str, input_path: Path, output_path: Path):
-    command = [
-        "ffmpeg",
-        "-loglevel", "error",
-        "-i", str(input_path),
-        "-c", "copy",
-        "-map_metadata", "0",
-        "-metadata", f"track={track_num}",
-        "-metadata", f"album={mix_title}",
-        "-id3v2_version", "3",
-        str(output_path),
-
-    ]
-    subprocess.run(command, shell=True)
+from ffmparakeet import run_ffmpeg
 
 def main():
     parser = argparse.ArgumentParser()
@@ -169,8 +154,7 @@ def main():
     for i, file in enumerate(mix):
         filepath = Path(file.filename)
         output_path = output_mix_path / filepath.name
-        run_ffmpeg(track_num=i + 1, mix_title=mix_title, input_path=filepath, output_path=output_path)
-
+        run_ffmpeg(track_num=i + 1, album=mix_title, source=filepath, destination=output_path)
 
 if __name__ == "__main__":
     main()

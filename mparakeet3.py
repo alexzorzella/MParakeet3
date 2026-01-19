@@ -1,9 +1,7 @@
-import re
 import math
 import shutil
 import argparse
 import itertools
-import subprocess
 from pathlib import Path
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -12,6 +10,7 @@ from tqdm import tqdm
 
 from jobdata import JobData
 from sconfig import parse_config_with_defaults
+from ffmparakeet import run_ffmpeg
 
 def convert_and_partition():
     parser = argparse.ArgumentParser()
@@ -25,6 +24,9 @@ def convert_and_partition():
     config_variables = (
         parse_config_with_defaults(section="music", params=[("source", str, args.source), ("output", str, args.output), ("maxthreads", int, args.max_threads), ("foldertracklimit", int, args.folder_track_limit)]))
     source, destination, max_threads, folder_track_limit = config_variables["source"], config_variables["output"], config_variables["maxthreads"], config_variables["foldertracklimit"]
+
+    if max_threads is None:
+        max_threads = 4
 
     if folder_track_limit is None:
         folder_track_limit = math.inf
@@ -79,9 +81,6 @@ def convert_and_partition():
                                           destination_path=(destination / f"{source_folder.name} ({first_track+1}-{last_track})" / track).with_suffix(".mp3")) for track in
                                   batch])
 
-    # for job_datum in job_datas:
-    #     logger.info(job_datum)
-
     with ThreadPoolExecutor(max_workers=max_threads) as executor:
         futures = [executor.submit(run_ffmpeg, job_data) for job_data in job_datas]
         for f in tqdm(as_completed(futures), total=len(futures), desc="Processing files", unit="file", ncols=100):
@@ -90,25 +89,6 @@ def convert_and_partition():
     print(f"Converted {len(audio_files)} audio files!")
 
     # logger.info(f"Found {len(audio_files)} files")
-
-def run_ffmpeg(job_data: JobData):
-    job_data.destination_path.parent.mkdir(parents=True, exist_ok=True)
-
-    clean_title = re.sub(r"\s\([a-z0-9]+_(?:Opus|AAC)\)$", '', job_data.source_path.stem)
-
-    command = [
-        "ffmpeg",
-        "-loglevel", "error",
-        "-i", str(job_data.source_path),
-        "-codec:a", "libmp3lame",
-        "-q:a", "0",
-        "-map_metadata", "0",
-        "-metadata", f"title={clean_title}",
-        "-id3v2_version", "3",
-        "-y",
-        str(job_data.destination_path)
-    ]
-    subprocess.run(command, shell=True)
 
 if __name__ == "__main__":
     convert_and_partition()
