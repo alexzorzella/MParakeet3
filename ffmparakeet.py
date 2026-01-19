@@ -2,7 +2,7 @@ import re
 import subprocess
 from pathlib import Path
 
-def run_ffmpeg(source: Path, destination: Path, track_num: int = -1, album: str = "", quiet: bool = True, codec: str = "libmp3lame", copy: bool = False):
+def run_ffmpeg(source: Path, destination: Path, quiet: bool = True, copy: bool = False, album: str = "", track_num: int = -1, codec: str = "libmp3lame"):
     destination.parent.mkdir(parents=True, exist_ok=True)
 
     clean_title = re.sub(r"\s\([a-z0-9]+_(?:Opus|AAC)\)$", '', source.stem)

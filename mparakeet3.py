@@ -1,4 +1,3 @@
-import math
 import shutil
 import argparse
 import itertools
@@ -28,10 +27,14 @@ def convert_and_partition():
     if max_threads is None:
         max_threads = 4
 
-    if folder_track_limit is None:
-        folder_track_limit = math.inf
+    unlimited_track_count = 100_000
 
-    ok = input(f"Copying and converting music from {source} to {destination} using {max_threads} threads with a {folder_track_limit} track limit per folder. OK? (y/n): ")
+    if folder_track_limit is None:
+        folder_track_limit = unlimited_track_count
+
+    folder_track_limit_info = f"a {folder_track_limit}" if folder_track_limit < unlimited_track_count else "an unlimited"
+
+    ok = input(f"Copying and converting music from {source} to {destination} using {max_threads} threads with {folder_track_limit_info} track limit per folder. OK? (y/n): ")
 
     if ok.lower() != "y":
         return
@@ -82,7 +85,7 @@ def convert_and_partition():
                                   batch])
 
     with ThreadPoolExecutor(max_workers=max_threads) as executor:
-        futures = [executor.submit(run_ffmpeg, job_data) for job_data in job_datas]
+        futures = [executor.submit(run_ffmpeg, job_data.source_path, job_data.destination_path) for job_data in job_datas]
         for f in tqdm(as_completed(futures), total=len(futures), desc="Processing files", unit="file", ncols=100):
             result = f.result()
 
