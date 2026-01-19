@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from jobdata import JobData
 from sconfig import parse_config_with_defaults
-from ffmparakeet import run_ffmpeg
+from ffmparakeet import run_ffmpeg, ffmpeg_encoders
 
 def convert_and_partition():
     parser = argparse.ArgumentParser()
@@ -17,12 +17,28 @@ def convert_and_partition():
     parser.add_argument("-o", "--output", type=str, help="Output directory")
     parser.add_argument("-t", "--max-threads", type=str, help="The number of CPUs to use")
     parser.add_argument("-l", "--folder-track-limit", type=str, help="The maximum number of tracks per folder")
+    parser.add_argument("-f", "--filetype", type=str, help="Output file type: i.e. mp3, aac, m4a, flac, wav, ogg")
 
     args = parser.parse_args()
 
     config_variables = (
-        parse_config_with_defaults(section="music", params=[("source", str, args.source), ("output", str, args.output), ("maxthreads", int, args.max_threads), ("foldertracklimit", int, args.folder_track_limit)]))
-    source, destination, max_threads, folder_track_limit = config_variables["source"], config_variables["output"], config_variables["maxthreads"], config_variables["foldertracklimit"]
+        parse_config_with_defaults(
+            section="music",
+            params=[
+                ("source", str, args.source),
+                ("output", str, args.output),
+                ("maxthreads", int, args.max_threads),
+                ("foldertracklimit", int, args.folder_track_limit),
+                ("filetype", str, args.filetype)]))
+
+    source, destination, max_threads, folder_track_limit, filetype = (
+        config_variables["source"],
+        config_variables["output"],
+        config_variables["maxthreads"],
+        config_variables["foldertracklimit"],
+        config_variables["filetype"])
+
+    encoder = ffmpeg_encoders[filetype.strip().lower()]
 
     if max_threads is None:
         max_threads = 4
@@ -53,9 +69,8 @@ def convert_and_partition():
     destination.mkdir(parents=True, exist_ok=True)
 
     source_folder = Path(source)
-    extensions = frozenset([ ".m4a", ".opus", ".mp3", ".flac", ".wav" ])
 
-    audio_files = [ f for f in source_folder.rglob("*") if f.suffix.lower() in extensions ]
+    audio_files = [ f for f in source_folder.rglob("*") if f.suffix.lower()[1:] in ffmpeg_encoders.keys() ]
 
     folder_track_map = defaultdict(list)
 
@@ -74,18 +89,18 @@ def convert_and_partition():
 
     for source_folder, batched in folder_track_map_partitioned.items():
         if len(batched) == 1:
-            job_datas.extend([JobData(source_path=source_folder / track, destination_path=(destination / source_folder.name / track).with_suffix(".mp3")) for track in batched[0]])
+            job_datas.extend([JobData(source_path=source_folder / track, destination_path=(destination / source_folder.name / track).with_suffix(f".{filetype}")) for track in batched[0]])
         else:
             for index, batch in enumerate(batched):
                 first_track = index * folder_track_limit
                 last_track = min((index + 1) * folder_track_limit, sum(map(len, batched)))
 
                 job_datas.extend([JobData(source_path=source_folder / track,
-                                          destination_path=(destination / f"{source_folder.name} ({first_track+1}-{last_track})" / track).with_suffix(".mp3")) for track in
+                                          destination_path=(destination / f"{source_folder.name} ({first_track+1}-{last_track})" / track).with_suffix(f".{filetype}")) for track in
                                   batch])
 
     with ThreadPoolExecutor(max_workers=max_threads) as executor:
-        futures = [executor.submit(run_ffmpeg, job_data.source_path, job_data.destination_path) for job_data in job_datas]
+        futures = [executor.submit(run_ffmpeg, job_data.source_path, job_data.destination_path, encoder, True) for job_data in job_datas]
         for f in tqdm(as_completed(futures), total=len(futures), desc="Processing files", unit="file", ncols=100):
             result = f.result()
 

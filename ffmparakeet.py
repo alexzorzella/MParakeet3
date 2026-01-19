@@ -2,17 +2,30 @@ import re
 import subprocess
 from pathlib import Path
 
-def run_ffmpeg(source: Path, destination: Path, quiet: bool = True, copy: bool = False, album: str = "", track_num: int = -1, codec: str = "libmp3lame"):
+def run_ffmpeg(
+        source: Path,
+        destination: Path,
+        codec: str = "libmp3lame",
+        replace_title: bool = False,
+        quiet: bool = True,
+        copy: bool = False,
+        album: str = "",
+        track_num: int = -1):
     destination.parent.mkdir(parents=True, exist_ok=True)
 
     clean_title = re.sub(r"\s\([a-z0-9]+_(?:Opus|AAC)\)$", '', source.stem)
 
     command = [ "ffmpeg" ]
 
+    if replace_title:
+        destination = str(destination.parent / f"{clean_title}{destination.suffix}")
+    else:
+        destination = str(destination)
+
     if quiet:
         command.extend(["-loglevel", "error"])
 
-    command.extend(["-i", str(source)])
+    command.extend(["-i", source])
 
     if not copy:
         command.extend(["-codec:a", codec])
@@ -34,3 +47,29 @@ def run_ffmpeg(source: Path, destination: Path, quiet: bool = True, copy: bool =
     command.append(str(destination))
 
     subprocess.run(command, shell=True)
+
+ffmpeg_encoders = {
+    "mp3": "libmp3lame",
+    "aac": "aac",
+    "m4a": "aac",
+    "mp4": "aac",
+    "flac": "flac",
+    "alac": "alac",
+    "wav": "pcm_s16le",
+    "wav64": "pcm_s24le",
+    "aiff": "pcm_s16be",
+    "ogg": "libvorbis",
+    "oga": "libvorbis",
+    "opus": "libopus",
+    "ac3": "ac3",
+    "eac3": "eac3",
+    "mp2": "mp2",
+    "ra": "cook",
+    "wma": "wmav2",
+    "wmav1": "wmav1",
+    "tta": "tta",
+    "tak": "tak",
+    "wv": "wavpack",
+    "webm": "libopus",
+    "raw": "pcm_s16le"
+}
