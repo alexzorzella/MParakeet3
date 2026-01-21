@@ -1,5 +1,3 @@
 [music]
-source="/Users/alexzorzella/Downloads/High Quality Rips/"
-output="/Users/alexzorzella/Downloads/High Quality Rips Converted/"
-maxthreads=2
-filetype=mp3
+source=/Users/alexzorzella/Downloads/High Quality Rips
+output=/Users/alexzorzella/Downloads/hi
