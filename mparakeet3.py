@@ -28,7 +28,7 @@ def convert_and_partition():
         source = input("Source: ").strip('"')
 
     while output is None:
-        output = str(input("Output: ")).strip('"')
+        output = input("Output: ").strip('"')
 
     default_max_threads = 1
     max_threads = default_max_threads if args.max_threads is None else args.max_threads
