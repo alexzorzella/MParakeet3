@@ -53,8 +53,8 @@ def convert_and_partition():
     while source is None or not Path(source).is_dir():
         source = input("Source: ").strip('"')
 
-    while output is None:
-        output = input("Output: ").strip('"')
+    while destination is None:
+        destination = input("Output: ").strip('"')
 
     encoder = ffmpeg_encoders[filetype.strip().lower()]
 
