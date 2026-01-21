@@ -28,14 +28,14 @@ def main():
     search = args.search
     output = args.output
 
+    config = parse_config_with_defaults(section="mix", params=[("search", str, search), ("output", str, output)])
+    search, output = config["search"], config["output"]
+
     while search is None or not Path(search).is_dir():
         search = input("Search: ").strip('"')
 
     while output is None:
         output = input("Output: ").strip('"')
-
-    config = parse_config_with_defaults(section="mix", params=[("search", str, search), ("output", str, output)])
-    search, output = config["search"], config["output"]
 
     search = Path(search)
     output = Path(output)
