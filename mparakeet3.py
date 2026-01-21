@@ -24,12 +24,6 @@ def convert_and_partition():
     source = args.source
     output = args.output
 
-    while source is None or not Path(source).is_dir():
-        source = input("Source: ").strip('"')
-
-    while output is None:
-        output = input("Output: ").strip('"')
-
     default_max_threads = 1
     max_threads = default_max_threads if args.max_threads is None else args.max_threads
 
@@ -55,6 +49,12 @@ def convert_and_partition():
         config_variables["maxthreads"],
         config_variables["foldertracklimit"],
         config_variables["filetype"])
+
+    while source is None or not Path(source).is_dir():
+        source = input("Source: ").strip('"')
+
+    while output is None:
+        output = input("Output: ").strip('"')
 
     encoder = ffmpeg_encoders[filetype.strip().lower()]
 
