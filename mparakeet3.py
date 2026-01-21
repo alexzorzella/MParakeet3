@@ -56,6 +56,8 @@ def convert_and_partition():
     while destination is None:
         destination = input("Output directory: ").strip('"')
 
+    max_threads = int(max_threads)
+
     encoder = ffmpeg_encoders[filetype.strip().lower()]
 
     folder_track_limit_info = f"a {folder_track_limit}" if folder_track_limit < def_folder_track_limit else "an unlimited"
