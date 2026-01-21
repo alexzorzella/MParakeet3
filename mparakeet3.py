@@ -21,15 +21,33 @@ def convert_and_partition():
 
     args = parser.parse_args()
 
+    source = args.source
+    output = args.output
+
+    while source is None or not Path(source).is_dir():
+        source = input("Source: ").strip('"')
+
+    while output is None:
+        output = str(input("Output: ")).strip('"')
+
+    default_max_threads = 1
+    max_threads = default_max_threads if args.max_threads is None else args.max_threads
+
+    def_folder_track_limit = 100_000
+    folder_track_limit = def_folder_track_limit if args.folder_track_limit is None else args.folder_track_limit
+
+    default_filetype = "mp3"
+    filetype = default_filetype if args.filetype is None else args.filetype
+
     config_variables = (
         parse_config_with_defaults(
             section="music",
             params=[
-                ("source", str, args.source),
-                ("output", str, args.output),
-                ("maxthreads", int, args.max_threads),
-                ("foldertracklimit", int, args.folder_track_limit),
-                ("filetype", str, args.filetype)]))
+                ("source", str, source),
+                ("output", str, output),
+                ("maxthreads", int, max_threads),
+                ("foldertracklimit", int, folder_track_limit),
+                ("filetype", str, filetype)]))
 
     source, destination, max_threads, folder_track_limit, filetype = (
         config_variables["source"],
@@ -40,17 +58,9 @@ def convert_and_partition():
 
     encoder = ffmpeg_encoders[filetype.strip().lower()]
 
-    if max_threads is None:
-        max_threads = 4
+    folder_track_limit_info = f"a {folder_track_limit}" if folder_track_limit < def_folder_track_limit else "an unlimited"
 
-    unlimited_track_count = 100_000
-
-    if folder_track_limit is None:
-        folder_track_limit = unlimited_track_count
-
-    folder_track_limit_info = f"a {folder_track_limit}" if folder_track_limit < unlimited_track_count else "an unlimited"
-
-    ok = input(f"Copying and converting music from {source} to {destination} using {max_threads} threads with {folder_track_limit_info} track limit per folder. OK? (y/n): ")
+    ok = input(f"Copying and converting music from {source} to {destination} using {max_threads} thread(s) with a {folder_track_limit_info} track limit per folder. OK? (y/n): ")
 
     if ok.lower() != "y":
         return

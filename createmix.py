@@ -66,7 +66,7 @@ def main():
                     processed_line = line.strip()
 
                     tracks = (audio_track for audio_track in audio_files
-                              if SequenceMatcher(None, audio_track.get('Title', 'Unknown Title')[0], processed_line).ratio() >= 0.8)
+                              if SequenceMatcher(None, audio_track.get('Title', 'Unknown Title')[0], processed_line).ratio() >= 0.6)
                     track = next(tracks, None)
 
                     if track is not None:
