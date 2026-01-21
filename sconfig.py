@@ -17,25 +17,24 @@ def parse_config(config_filename="config.ini", section="", params: list[tuple[st
     return parse_config_with_defaults(config_filename=config_filename, section=section, params=[(item[0], item[1], None) for item in params])
 
 def parse_config_with_defaults(config_filename="config.ini", section="", params: list[tuple[str, type, object]] | None = None):
+    default_result = defaultdict(lambda: None, {n: default for n, _, default in params })
+
     if params is None or len(params) <= 0 or section == "":
-        return []
+        return default_result
 
     config = configparser.ConfigParser()
 
     config_path = Path(config_filename)
 
     if not config_path.is_file():
-        error = f"{config_filename} not found. Please create a config file."
-
-        logger.error(error)
-        raise (FileNotFoundError(error))
+        return default_result
     else:
         config.read(config_filename)
 
         try:
             import_section = config[section]
         except:
-            return []
+            return default_result
 
         results = defaultdict()
 
