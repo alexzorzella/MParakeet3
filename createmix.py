@@ -1,118 +1,50 @@
-import configparser
-import logging.config
 import re
-import subprocess
 import time
-from collections import defaultdict
-from pathlib import Path
-import pathvalidate
-from pyfzf.pyfzf import FzfPrompt
-from mutagen.easyid3 import EasyID3
-from mutagen.mp3 import MP3
 import argparse
+import pathvalidate
+
+from pathlib import Path
+from collections import defaultdict
+
+from mutagen.mp3 import MP3
+from mutagen.easyid3 import EasyID3
+
 from difflib import SequenceMatcher
+from pyfzf.pyfzf import FzfPrompt
 
-config_filename = "config.ini"
-
-logging.config.dictConfig(
-    {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "simple": {
-                "format": "[%(asctime)s .%(msecs)03d|%(levelname)s|%(name)s|%(filename)s:%(lineno)d] %(message)s",
-                "datefmt": "%Y-%m-%dT%H:%M:%S%z",
-            }
-        },
-        "handlers": {
-            "stdout": {
-                "class": "logging.StreamHandler",
-                "formatter": "simple",
-                "stream": "ext://sys.stdout",
-                # "level": "WARNING",
-                # "level": "INFO",
-                "level": "DEBUG",
-            },
-        },
-        "loggers": {
-            "root": {
-                "level": "DEBUG",
-                "handlers": [
-                    "stdout",
-                ],
-            }
-        },
-    }
-)
-
-logger = logging.getLogger("createmix")
-
-
-def get_config_param(config_section, cast_to, param_name):
-    try:
-        return cast_to(config_section[param_name])
-    except:
-        error = f"{param_name} not found in {config_filename}."
-        logger.exception(error)
-
-        return None
-
-
-def parse_config():
-    config = configparser.ConfigParser()
-
-    config_path = Path(config_filename)
-
-    if not config_path.is_file():
-        error = f"{config_filename} not found. Please create a config file."
-
-        logger.error(error)
-        raise (FileNotFoundError(error))
-    else:
-        config.read(config_filename)
-
-        try:
-            import_section = config["mix"]
-        except:
-            return
-
-        search = get_config_param(config_section=import_section, cast_to=str, param_name="search")
-        mixout = get_config_param(config_section=import_section, cast_to=str, param_name="mixout")
-
-        return search, mixout
-
-
-def run_ffmpeg(track_num: int, mix_title: str, input_path: Path, output_path: Path):
-    command = [
-        "ffmpeg",
-        "-loglevel", "error",
-        "-i", str(input_path),
-        "-c", "copy",
-        "-map_metadata", "0",
-        "-metadata", f"track={track_num}",
-        "-metadata", f"album={mix_title}",
-        "-id3v2_version", "3",
-        str(output_path),
-
-    ]
-    subprocess.run(command, shell=True)
+from ottlog import logger
+from sconfig import parse_config_with_defaults
+from ffmparakeet import run_ffmpeg
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--load-mix", type=str, help="Load a mix from a directory or file")
+    parser.add_argument("-s", "--search", type=str, help="Search from directory")
+    parser.add_argument("-o", "--output", type=str, help="Output to directory")
+    parser.add_argument("-n", "--name", type=str, help="Mix name")
 
     args = parser.parse_args()
 
-    search, mix_out = parse_config()
+    search = args.search
+    output = args.output
+
+    config = parse_config_with_defaults(section="mix", params=[("search", str, search), ("output", str, output)])
+    search, output = config["search"], config["output"]
+
+    while search is None or not Path(search).is_dir():
+        search = input("Search: ").strip('"')
+
+    while output is None:
+        output = input("Output: ").strip('"')
+
     search = Path(search)
-    mix_out = Path(mix_out)
+    output = Path(output)
 
     if not search.exists() or not search.is_dir():
         logger.error(f"Search directory does not exist: {search}")
         return
 
-    mix_out.mkdir(parents=True, exist_ok=True)
-
+    output.mkdir(parents=True, exist_ok=True)
 
     files = list(search.rglob("*.mp3"))
 
@@ -127,7 +59,7 @@ def main():
         file_names.append(track_name)
         file_name_to_audio_file[track_name] = audio_file
 
-    mix_title = ""
+    mix_title = "" if args.name is None else args.name
     mix = []
 
     ###########################################################################################
@@ -143,13 +75,13 @@ def main():
                     processed_line = line.strip()
 
                     tracks = (audio_track for audio_track in audio_files
-                              if SequenceMatcher(None, audio_track.get('Title', 'Unknown Title')[0], processed_line).ratio() >= 0.8)
+                              if SequenceMatcher(None, audio_track.get('Title', 'Unknown Title')[0], processed_line).ratio() >= 0.6)
                     track = next(tracks, None)
 
                     if track is not None:
                         mix.append(track)
 
-            input(f"Loaded {len(mix)} tracks from {mix_title}.\nPress enter to continue")
+            print(f"Loaded {len(mix)} tracks from {mix_title}.\nPress enter to continue")
         elif loaded_mix_path.is_dir():
             mix_title = loaded_mix_path.stem
 
@@ -159,7 +91,7 @@ def main():
             for audio_file in mix_audio_files:
                 mix.append(file_name_to_audio_file[audio_file.get('Title', 'Unknown Title')[0]])
 
-            input(f"Loaded {len(mix)} tracks from {mix_title}")
+            print(f"Loaded {len(mix)} tracks from {mix_title}")
         else:
             print(f"Didn't find a file or directory to load a mix from at {loaded_mix_path}.\nPress enter to continue")
 
@@ -168,6 +100,11 @@ def main():
     while mix_title.strip() == "":
         inp = input("Enter mix title :3 : ")
         mix_title = pathvalidate.sanitize_filename(inp).strip()
+
+    ok = input(f"Searching {search} and outputting to {output / mix_title}. OK? (y/n): ")
+
+    if ok.lower() != "y":
+        return
 
     EXIT = ".exit"
     SHOW = ".show"
@@ -221,13 +158,12 @@ def main():
         selected = file_name_to_audio_file[selected]
         mix.append(selected)
 
-    output_mix_path = mix_out / mix_title
+    output_mix_path = output / mix_title
     output_mix_path.mkdir(parents=True, exist_ok=True)
     for i, file in enumerate(mix):
         filepath = Path(file.filename)
         output_path = output_mix_path / filepath.name
-        run_ffmpeg(track_num=i + 1, mix_title=mix_title, input_path=filepath, output_path=output_path)
-
+        run_ffmpeg(track_num=i + 1, album=mix_title, source=filepath, destination=output_path)
 
 if __name__ == "__main__":
     main()
