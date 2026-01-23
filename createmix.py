@@ -75,23 +75,26 @@ def main():
 
             with open(loaded_mix_path, 'r') as file:
                 for line in file:
-                    processed_line = line.strip()
+                    if line.split(" ")[0] == ".break":
+                        mix.append(line)
+                    else:
+                        processed_line = line.strip()
 
-                    track = None
-                    best_match = 0
+                        track = None
+                        best_match = 0
 
-                    for audio_track in audio_files:
-                        match_ratio = SequenceMatcher(None, audio_track.get('Title', Path(track.filename).stem)[0],
-                                                      processed_line).ratio()
+                        for audio_track in audio_files:
+                            match_ratio = SequenceMatcher(None, audio_track.get('Title', Path(audio_track.filename).stem)[0],
+                                                          processed_line).ratio()
 
-                        if match_ratio > best_match:
-                            best_match = match_ratio
-                            track = audio_track
+                            if match_ratio > best_match:
+                                best_match = match_ratio
+                                track = audio_track
 
-                    if track is not None:
-                        mix.append(track)
+                        if track is not None:
+                            mix.append(track)
 
-            print(f"Loaded {len(mix)} tracks from {mix_title}.\nPress enter to continue")
+            input(f"Loaded {len(mix)} tracks from {mix_title}.\nPress enter to continue")
         elif loaded_mix_path.is_dir():
             mix_title = loaded_mix_path.stem
 
@@ -119,7 +122,7 @@ def main():
     EXIT = ".exit"
     VIEW = ".mix"
     ADD_BREAK = ".add_break"
-    EXPORT_TO_TXT = ".save_to_txt"
+    EXPORT_TO_TXT = ".write_to_txt"
     COPY_FILES = ".export_mix"
 
     options = [*file_names, VIEW, ADD_BREAK, EXPORT_TO_TXT, COPY_FILES, EXIT]
@@ -154,9 +157,9 @@ def main():
 def view(mix):
     mix_choice = ""
 
-    while mix_choice.strip() != "" or mix.strip().lower() != "e":
-        print()
+    print("\n" * 100)
 
+    while True:
         longest_title = max(len(song.get('Title', Path(song.filename).stem)[0]) for song in mix if isinstance(song, MP3)) + 10
         section_num = 0
         section_length: float = 0
@@ -216,7 +219,67 @@ def view(mix):
         length_prompt = "Total"
         print(f"{padding}{length_prompt.ljust(longest_title, '.')} ({total_length_as_str})\n")
 
-        mix_choice = input(f"Select something using 1-{i + 1} or [E]xit: ")
+        mix_choice = -1
+
+        while mix_choice < 1 or mix_choice > i + 1:
+            mix_choice_input = input(f"Select something using [1]-[{i + 1}] or [E]xit: ").lower()
+
+            if mix_choice_input == "e":
+                return
+
+            try:
+                mix_choice = int(mix_choice_input)
+            except:
+                pass
+
+        mix_choice -= 1
+
+        selection = mix[mix_choice]
+
+        if not isinstance(selection, MP3):
+            selection_message = "Break"
+        else:
+            selection_message = selection.get('Title', Path(selection.filename).stem)[0]
+
+        print(f"Selecting {selection_message}")
+
+        song_action = ""
+
+        while song_action not in ["m", "g", "d", "e"]:
+            try:
+                song_action = input("[M]ove [G]roup [D]elete [E]xit: ").lower()
+            except:
+                pass
+
+        action_message = ""
+
+        if song_action == "m":
+            insert_at = -1
+
+            while insert_at < 1 or insert_at > i + 2:
+                try:
+                    insert_at = int(input(f"Move to [1]-[{i + 2}]: "))
+                except:
+                    pass
+
+            mix.remove(selection)
+            mix.insert(insert_at - 1, selection)
+
+            action_message = f"Moved {selection_message} to {insert_at}"
+        elif song_action == "g":
+            pass
+        elif song_action == "d":
+            mix.remove(selection)
+
+            action_message = f"Removed {selection_message} from the mix"
+        elif song_action == "e":
+            mix_choice = "e"
+            continue
+
+        print("\n" * 100)
+
+        if action_message != "":
+            print(action_message)
 
 def add_break(mix):
     limit = input("Section length (hh:mm:ss): ")
