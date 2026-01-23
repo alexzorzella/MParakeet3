@@ -16,6 +16,9 @@ from ottlog import logger
 from sconfig import parse_config_with_defaults
 from ffmparakeet import run_ffmpeg
 
+from colorama import Fore
+from colorama import Style
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--load-mix", type=str, help="Load a mix from a directory or file")
@@ -48,13 +51,13 @@ def main():
 
     files = list(search.rglob("*.mp3"))
 
-    audio_files = [ MP3(file, ID3=EasyID3) for file in files ]
+    audio_files = [MP3(file, ID3=EasyID3) for file in files]
     file_names = []
 
     file_name_to_audio_file = defaultdict()
 
     for audio_file in audio_files:
-        track_name = audio_file.get('Title', 'Unknown Title')[0]
+        track_name = audio_file.get('Title', Path(audio_file.filename).stem)[0]
 
         file_names.append(track_name)
         file_name_to_audio_file[track_name] = audio_file
@@ -72,16 +75,26 @@ def main():
 
             with open(loaded_mix_path, 'r') as file:
                 for line in file:
-                    processed_line = line.strip()
+                    if line.split(" ")[0] == ".break":
+                        mix.append(line)
+                    else:
+                        processed_line = line.strip()
 
-                    tracks = (audio_track for audio_track in audio_files
-                              if SequenceMatcher(None, audio_track.get('Title', 'Unknown Title')[0], processed_line).ratio() >= 0.6)
-                    track = next(tracks, None)
+                        track = None
+                        best_match = 0
 
-                    if track is not None:
-                        mix.append(track)
+                        for audio_track in audio_files:
+                            match_ratio = SequenceMatcher(None, audio_track.get('Title', Path(audio_track.filename).stem)[0],
+                                                          processed_line).ratio()
 
-            print(f"Loaded {len(mix)} tracks from {mix_title}.\nPress enter to continue")
+                            if match_ratio > best_match:
+                                best_match = match_ratio
+                                track = audio_track
+
+                        if track is not None:
+                            mix.append(track)
+
+            input(f"Loaded {len(mix)} tracks from {mix_title}.\nPress enter to continue")
         elif loaded_mix_path.is_dir():
             mix_title = loaded_mix_path.stem
 
@@ -89,7 +102,7 @@ def main():
             mix_audio_files = [MP3(file, ID3=EasyID3) for file in mix_tracks]
 
             for audio_file in mix_audio_files:
-                mix.append(file_name_to_audio_file[audio_file.get('Title', 'Unknown Title')[0]])
+                mix.append(file_name_to_audio_file[audio_file.get('Title', Path(audio_file.filename).stem)[0]])
 
             print(f"Loaded {len(mix)} tracks from {mix_title}")
         else:
@@ -107,50 +120,33 @@ def main():
         return
 
     EXIT = ".exit"
-    SHOW = ".show"
-    SAVE_AND_CLOSE = ".save"
+    VIEW = ".mix"
+    ADD_BREAK = ".add_break"
+    EXPORT_TO_TXT = ".write_to_txt"
+    COPY_FILES = ".export_mix"
 
-    options = [*file_names, SHOW, SAVE_AND_CLOSE, EXIT ]
+    options = [*file_names, VIEW, ADD_BREAK, EXPORT_TO_TXT, COPY_FILES, EXIT]
     fzf = FzfPrompt()
 
     while True:
         selected = fzf.prompt(options)
+
         if len(selected) != 1:
             continue
+
         selected = selected[0]
 
-        if selected == SHOW:
-            print()
-
-            longest_title = max(len(song.get('Title', 'Unknown Title')[0]) for song in mix) + 10
-            total_length: float = 0
-
-            index_format = "02" if len(mix) >= 10 else "0"
-            padding = re.sub('.', ' ', f"{len(mix):{index_format}}. ")
-
-            title_a = "Song Title"
-            title_b = "Length"
-            print(f"{padding}{title_a.ljust(longest_title)} {title_b}")
-
-            for i, song in enumerate(mix):
-                song_title = song.get('Title', 'Unknown Title')[0]
-                song_length = song.info.length
-                time_struct = time.gmtime(song_length)
-                song_length_as_str = time.strftime("%H:%M:%S", time_struct)
-
-                total_length += song_length
-
-                print(f"{i+1:{index_format}}. {song_title.ljust(longest_title, '.')} ({song_length_as_str})")
-
-            time_struct = time.gmtime(total_length)
-            total_length_as_str = time.strftime("%H:%M:%S", time_struct)
-
-            length_prompt = "Total"
-            print(f"{padding}{length_prompt.ljust(longest_title, '.')} ({total_length_as_str})\n")
-
-            input("Press enter to continue...")
+        if selected == VIEW:
+            view(mix)
             continue
-        elif selected == SAVE_AND_CLOSE:
+        elif selected == ADD_BREAK:
+            add_break(mix)
+            continue
+        elif selected == EXPORT_TO_TXT:
+            export_to_txt(output, mix_title, mix)
+            continue
+        elif selected == COPY_FILES:
+            copy_files(output, mix_title, mix)
             break
         elif selected == EXIT:
             return
@@ -158,12 +154,230 @@ def main():
         selected = file_name_to_audio_file[selected]
         mix.append(selected)
 
+def view(mix):
+    mix_choice = ""
+
+    print("\n" * 100)
+
+    while True:
+        longest_title = max(len(song.get('Title', Path(song.filename).stem)[0]) for song in mix if isinstance(song, MP3)) + 10
+        section_num = 0
+        section_length: float = 0
+        total_length: float = 0
+
+        index_format = "02" if len(mix) >= 10 else "0"
+        padding = re.sub('.', ' ', f"{len(mix):{index_format}}. ")
+
+        title_a = "Song Title"
+        title_b = "Length"
+        print(f"{padding}{title_a.ljust(longest_title)} {title_b}")
+
+        for i, song in enumerate(mix):
+            if not isinstance(song, MP3):
+                break_time_cutoff_raw = song.split(" ")[1]
+
+                time_values = break_time_cutoff_raw.split(":")
+
+                break_time_cutoff: int = 0
+
+                if len(time_values) == 1:
+                    break_time_cutoff = int(time_values[0])
+                elif len(time_values) == 2:
+                    break_time_cutoff = int(time_values[0]) * 60 + int(time_values[0])
+                elif len(time_values) == 3:
+                    break_time_cutoff = int(time_values[0]) * 60 * 60 + int(time_values[1]) * 60 + int(time_values[2])
+
+                time_difference = abs(break_time_cutoff - section_length)
+                section_length_ok = section_length <= break_time_cutoff
+                difference_sign = "-" if section_length_ok else "+"
+
+                color = Fore.GREEN if section_length_ok else Fore.RED
+
+                time_struct = time.gmtime(time_difference)
+                section_length_as_str = time.strftime("%H:%M:%S", time_struct)
+
+                part_name = f"{alphabet[section_num].upper()} Side"
+
+                print(f"{Fore.YELLOW}{i + 1:{index_format}}. {part_name.ljust(longest_title, '.')}{Style.RESET_ALL} {color}{difference_sign}{section_length_as_str}{Style.RESET_ALL} ")
+
+                section_num += 1
+                section_length = 0
+            else:
+                song_title = song.get('Title', Path(song.filename).stem)[0]
+                song_length = song.info.length
+                time_struct = time.gmtime(song_length)
+                song_length_as_str = time.strftime("%H:%M:%S", time_struct)
+
+                section_length += song_length
+                total_length += song_length
+
+                print(f"{i + 1:{index_format}}. {song_title.replace("： ", ": ").ljust(longest_title, '.')} ({song_length_as_str})")
+
+        time_struct = time.gmtime(total_length)
+        total_length_as_str = time.strftime("%H:%M:%S", time_struct)
+
+        length_prompt = "Total"
+        print(f"{padding}{length_prompt.ljust(longest_title, '.')} ({total_length_as_str})\n")
+
+        mix_choice = -1
+
+        while mix_choice < 1 or mix_choice > i + 1:
+            mix_choice_input = input(f"Select something using [1]-[{i + 1}] or [E]xit: ").lower()
+
+            if mix_choice_input == "e":
+                return
+
+            try:
+                mix_choice = int(mix_choice_input)
+            except:
+                pass
+
+        mix_choice -= 1
+
+        selection = mix[mix_choice]
+
+        if not isinstance(selection, MP3):
+            selection_message = "Break"
+        else:
+            selection_message = selection.get('Title', Path(selection.filename).stem)[0]
+
+        print(f"Selecting {selection_message}")
+
+        song_action = ""
+
+        options = ["m", "g", "p", "t", "r", "e"] if isinstance(selection, MP3) else ["m", "g", "r", "e"]
+
+        while song_action not in options:
+            try:
+                if isinstance(selection, MP3):
+                    song_action = input("[M]ove\n[G]roup\n[P]lay\nPreview [T]ransition\n[R]emove From Mix\n[E]xit\n\n").lower()
+                else:
+                    song_action = input("[M]ove\n[G]roup\n[R]emove From Mix\n[E]xit\n\n").lower()
+            except:
+                pass
+
+        action_message = ""
+
+        if song_action == "m":
+            insert_at = -1
+
+            while insert_at < 1 or insert_at > i + 2:
+                try:
+                    insert_at = int(input(f"Move to [1]-[{i + 2}]: "))
+                except:
+                    pass
+
+            mix.remove(selection)
+            mix.insert(insert_at - 1, selection)
+
+            action_message = f"Moved {selection_message} to {insert_at}"
+        elif song_action == "g":
+            pass
+        elif song_action == "p":
+            play_song(selection.filename)
+        elif song_action == "t":
+            selected_song_path = selection.filename
+
+            next_song_index = mix_choice + 1
+            next_song = None
+
+            while next_song_index < len(mix) and not isinstance(next_song, MP3):
+                next_song = mix[next_song_index]
+                next_song_index += 1
+
+            if next_song is not None:
+                next_song_path = next_song.filename
+                preview_transition(selected_song_path, next_song_path, preview_length=10)
+        elif song_action == "r":
+            mix.remove(selection)
+            action_message = f"Removed {selection_message} from the mix"
+        elif song_action == "e":
+            pass
+
+        print("\n" * 100)
+
+        if action_message != "":
+            print(action_message)
+
+def add_break(mix):
+    while True:
+        limit = input("Section length (hh:mm:ss) or [E]xit: ")
+
+        if limit.strip().lower() == "e":
+            break
+
+        try:
+            time_values = limit.split(":")
+
+            if len(time_values) > 3 or len(time_values) <= 0:
+                continue
+            else:
+                for i, value in enumerate(time_values):
+                    int(value)
+
+                mix.append(f".break {limit}")
+                return
+        except:
+            pass
+
+alphabet = "abcdefghijklknopqrstuvwxyz"
+
+def export_to_txt(output, mix_title, mix):
+    output_mix_path = output
+    output_mix_path.mkdir(parents=True, exist_ok=True)
+
+    with open(output_mix_path / f"{mix_title}.txt", "w", encoding="utf-8") as file:
+        for i, track in enumerate(mix):
+            if isinstance(track, MP3):
+                track_title = track.get('Title', Path(track.filename).stem)[0]
+                print(track_title)
+                file.write(f"{track_title}\n")
+            elif isinstance(track, str):
+                file.write(f"{track}\n")
+
+def copy_files(output, mix_title, mix):
     output_mix_path = output / mix_title
     output_mix_path.mkdir(parents=True, exist_ok=True)
+
     for i, file in enumerate(mix):
         filepath = Path(file.filename)
         output_path = output_mix_path / filepath.name
         run_ffmpeg(track_num=i + 1, album=mix_title, source=filepath, destination=output_path)
+
+import vlc
+from mutagen.mp3 import MP3
+
+def play_song(song_path):
+    player = vlc.MediaPlayer(song_path)
+
+    print("Playing preview...")
+    player.play()
+
+    input("Press enter to stop playback ")
+    player.stop()
+
+def preview_transition(song_ending_path, song_starting_path, preview_length=1):
+    song_ending = MP3(song_ending_path)
+    song_ending_length = song_ending.info.length
+
+    start_song_ending_at = max(0, song_ending_length - preview_length)
+
+    song_ending_player = vlc.MediaPlayer(song_ending_path)
+    song_starting_player = vlc.MediaPlayer(song_starting_path)
+
+    print("Playing preview...")
+    song_ending_player.play()
+
+    time.sleep(0.1)
+
+    song_ending_player.set_time(int(start_song_ending_at * 1000))
+
+    time.sleep(preview_length)
+
+    song_starting_player.play()
+
+    input("Press enter to stop playback ")
+    song_starting_player.stop()
 
 if __name__ == "__main__":
     main()

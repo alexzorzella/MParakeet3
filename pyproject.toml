@@ -2,12 +2,15 @@
 name = "mparakeet3"
 version = "0.1.0"
 description = "Add your description here"
-requires-python = ">=3.14"
+requires-python = ">=3.12,<3.13"
 dependencies = [
+    "colorama>=0.4.6",
     "fuzzywuzzy>=0.18.0",
     "mutagen>=1.47.0",
     "pathvalidate>=3.3.1",
+    "pydub>=0.25.1",
     "pyfzf>=0.3.1",
+    "python-vlc>=3.0.21203",
     "tqdm>=4.67.1",
     "yt-dlp>=2025.12.8",
 ]
