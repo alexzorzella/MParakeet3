@@ -245,9 +245,14 @@ def view(mix):
 
         song_action = ""
 
-        while song_action not in ["m", "g", "p", "d", "e"]:
+        options = ["m", "g", "p", "t", "r", "e"] if isinstance(selection, MP3) else ["m", "g", "r", "e"]
+
+        while song_action not in options:
             try:
-                song_action = input("[M]ove [G]roup [P]review Transition [D]elete [E]xit: ").lower()
+                if isinstance(selection, MP3):
+                    song_action = input("[M]ove\n[G]roup\n[P]lay\nPreview [T]ransition\n[R]emove From Mix\n[E]xit\n\n").lower()
+                else:
+                    song_action = input("[M]ove\n[G]roup\n[R]emove From Mix\n[E]xit\n\n").lower()
             except:
                 pass
 
@@ -269,14 +274,25 @@ def view(mix):
         elif song_action == "g":
             pass
         elif song_action == "p":
-            preview_transition(selection.filename, mix[mix.index(selection) + 1].filename, preview_length=10)
-        elif song_action == "d":
-            mix.remove(selection)
+            play_song(selection.filename)
+        elif song_action == "t":
+            selected_song_path = selection.filename
 
+            next_song_index = mix_choice + 1
+            next_song = None
+
+            while next_song_index < len(mix) and not isinstance(next_song, MP3):
+                next_song = mix[next_song_index]
+                next_song_index += 1
+
+            if next_song is not None:
+                next_song_path = next_song.filename
+                preview_transition(selected_song_path, next_song_path, preview_length=10)
+        elif song_action == "r":
+            mix.remove(selection)
             action_message = f"Removed {selection_message} from the mix"
         elif song_action == "e":
-            mix_choice = "e"
-            continue
+            pass
 
         print("\n" * 100)
 
@@ -315,6 +331,15 @@ def copy_files(output, mix_title, mix):
 import vlc
 from mutagen.mp3 import MP3
 
+def play_song(song_path):
+    player = vlc.MediaPlayer(song_path)
+
+    print("Playing preview...")
+    player.play()
+
+    input("Press enter to stop playback ")
+    player.stop()
+
 def preview_transition(song_ending_path, song_starting_path, preview_length=1):
     song_ending = MP3(song_ending_path)
     song_ending_length = song_ending.info.length
@@ -325,7 +350,6 @@ def preview_transition(song_ending_path, song_starting_path, preview_length=1):
     song_starting_player = vlc.MediaPlayer(song_starting_path)
 
     print("Playing preview...")
-
     song_ending_player.play()
 
     time.sleep(0.1)
@@ -335,8 +359,8 @@ def preview_transition(song_ending_path, song_starting_path, preview_length=1):
     time.sleep(preview_length)
 
     song_starting_player.play()
-    input("Press enter to stop playback ")
 
+    input("Press enter to stop playback ")
     song_starting_player.stop()
 
 if __name__ == "__main__":
