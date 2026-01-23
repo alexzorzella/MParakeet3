@@ -245,9 +245,9 @@ def view(mix):
 
         song_action = ""
 
-        while song_action not in ["m", "g", "d", "e"]:
+        while song_action not in ["m", "g", "p", "d", "e"]:
             try:
-                song_action = input("[M]ove [G]roup [D]elete [E]xit: ").lower()
+                song_action = input("[M]ove [G]roup [P]review Transition [D]elete [E]xit: ").lower()
             except:
                 pass
 
@@ -268,6 +268,8 @@ def view(mix):
             action_message = f"Moved {selection_message} to {insert_at}"
         elif song_action == "g":
             pass
+        elif song_action == "p":
+            preview_transition(selection.filename, mix[mix.index(selection) + 1].filename, preview_length=10)
         elif song_action == "d":
             mix.remove(selection)
 
@@ -309,6 +311,33 @@ def copy_files(output, mix_title, mix):
         filepath = Path(file.filename)
         output_path = output_mix_path / filepath.name
         run_ffmpeg(track_num=i + 1, album=mix_title, source=filepath, destination=output_path)
+
+import vlc
+from mutagen.mp3 import MP3
+
+def preview_transition(song_ending_path, song_starting_path, preview_length=1):
+    song_ending = MP3(song_ending_path)
+    song_ending_length = song_ending.info.length
+
+    start_song_ending_at = max(0, song_ending_length - preview_length)
+
+    song_ending_player = vlc.MediaPlayer(song_ending_path)
+    song_starting_player = vlc.MediaPlayer(song_starting_path)
+
+    print("Playing preview...")
+
+    song_ending_player.play()
+
+    time.sleep(0.1)
+
+    song_ending_player.set_time(int(start_song_ending_at * 1000))
+
+    time.sleep(preview_length)
+
+    song_starting_player.play()
+    input("Press enter to stop playback ")
+
+    song_starting_player.stop()
 
 if __name__ == "__main__":
     main()

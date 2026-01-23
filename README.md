@@ -3,7 +3,7 @@
 </div>
 
 ## Setup
-MParakeet3 requires [FZF](https://github.com/junegunn/fzf) and [ffmpeg](https://www.ffmpeg.org/download.html). To install them on Windows, use `winget install fzf` and `winget install ffmpeg`.<br>To install them on Mac, use [Homebrew](https://brew.sh/) to run `brew install fzf` and `brew install ffmpeg`.
+MParakeet3 requires [FZF](https://github.com/junegunn/fzf), [ffmpeg](https://www.ffmpeg.org/download.html), and [VLC](https://images.videolan.org/vlc/download-windows.html). To install them on Windows, use `winget install fzf`, `winget install ffmpeg`, and `winget install VideoLAN.VLC`.<br>To install them on Mac, use [Homebrew](https://brew.sh/) to run `brew install fzf`, `brew install ffmpeg`, and `brew install vlc`.
 
 ## Download Playlist
 `downloadplaylist.py` allows you to download a playlist from a link into a specified output encoded as a passed audio filetype. If rate limited, it will wait and try again in increasing intervals.
