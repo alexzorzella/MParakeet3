@@ -16,6 +16,7 @@ from ottlog import logger
 from sconfig import parse_config_with_defaults
 from ffmparakeet import run_ffmpeg
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--load-mix", type=str, help="Load a mix from a directory or file")
@@ -48,7 +49,7 @@ def main():
 
     files = list(search.rglob("*.mp3"))
 
-    audio_files = [ MP3(file, ID3=EasyID3) for file in files ]
+    audio_files = [MP3(file, ID3=EasyID3) for file in files]
     file_names = []
 
     file_name_to_audio_file = defaultdict()
@@ -74,9 +75,16 @@ def main():
                 for line in file:
                     processed_line = line.strip()
 
-                    tracks = (audio_track for audio_track in audio_files
-                              if SequenceMatcher(None, audio_track.get('Title', 'Unknown Title')[0], processed_line).ratio() >= 0.6)
-                    track = next(tracks, None)
+                    track = None
+                    best_match = 0
+
+                    for audio_track in audio_files:
+                        match_ratio = SequenceMatcher(None, audio_track.get('Title', 'Unknown Title')[0],
+                                                      processed_line).ratio()
+
+                        if match_ratio > best_match:
+                            best_match = match_ratio
+                            track = audio_track
 
                     if track is not None:
                         mix.append(track)
@@ -110,7 +118,7 @@ def main():
     SHOW = ".show"
     SAVE_AND_CLOSE = ".save"
 
-    options = [*file_names, SHOW, SAVE_AND_CLOSE, EXIT ]
+    options = [*file_names, SHOW, SAVE_AND_CLOSE, EXIT]
     fzf = FzfPrompt()
 
     while True:
@@ -140,7 +148,7 @@ def main():
 
                 total_length += song_length
 
-                print(f"{i+1:{index_format}}. {song_title.ljust(longest_title, '.')} ({song_length_as_str})")
+                print(f"{i + 1:{index_format}}. {song_title.ljust(longest_title, '.')} ({song_length_as_str})")
 
             time_struct = time.gmtime(total_length)
             total_length_as_str = time.strftime("%H:%M:%S", time_struct)
@@ -164,6 +172,7 @@ def main():
         filepath = Path(file.filename)
         output_path = output_mix_path / filepath.name
         run_ffmpeg(track_num=i + 1, album=mix_title, source=filepath, destination=output_path)
+
 
 if __name__ == "__main__":
     main()
