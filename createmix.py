@@ -152,68 +152,71 @@ def main():
         mix.append(selected)
 
 def view(mix):
-    print()
+    mix_choice = ""
 
-    longest_title = max(len(song.get('Title', Path(song.filename).stem)[0]) for song in mix if isinstance(song, MP3)) + 10
-    section_num = 0
-    section_length: float = 0
-    total_length: float = 0
+    while mix_choice.strip() != "" or mix.strip().lower() != "e":
+        print()
 
-    index_format = "02" if len(mix) >= 10 else "0"
-    padding = re.sub('.', ' ', f"{len(mix):{index_format}}. ")
+        longest_title = max(len(song.get('Title', Path(song.filename).stem)[0]) for song in mix if isinstance(song, MP3)) + 10
+        section_num = 0
+        section_length: float = 0
+        total_length: float = 0
 
-    title_a = "Song Title"
-    title_b = "Length"
-    print(f"{padding}{title_a.ljust(longest_title)} {title_b}")
+        index_format = "02" if len(mix) >= 10 else "0"
+        padding = re.sub('.', ' ', f"{len(mix):{index_format}}. ")
 
-    for i, song in enumerate(mix):
-        if not isinstance(song, MP3):
-            break_time_cutoff_raw = song.split(" ")[1]
+        title_a = "Song Title"
+        title_b = "Length"
+        print(f"{padding}{title_a.ljust(longest_title)} {title_b}")
 
-            time_values = break_time_cutoff_raw.split(":")
+        for i, song in enumerate(mix):
+            if not isinstance(song, MP3):
+                break_time_cutoff_raw = song.split(" ")[1]
 
-            break_time_cutoff: int = 0
+                time_values = break_time_cutoff_raw.split(":")
 
-            if len(time_values) == 1:
-                break_time_cutoff = int(time_values[0])
-            elif len(time_values) == 2:
-                break_time_cutoff = int(time_values[0]) * 60 + int(time_values[0])
-            elif len(time_values) == 3:
-                break_time_cutoff = int(time_values[0]) * 60 * 60 + int(time_values[1]) * 60 + int(time_values[2])
+                break_time_cutoff: int = 0
 
-            time_difference = abs(break_time_cutoff - section_length)
-            section_length_ok = section_length <= break_time_cutoff
-            difference_sign = "-" if section_length_ok else "+"
+                if len(time_values) == 1:
+                    break_time_cutoff = int(time_values[0])
+                elif len(time_values) == 2:
+                    break_time_cutoff = int(time_values[0]) * 60 + int(time_values[0])
+                elif len(time_values) == 3:
+                    break_time_cutoff = int(time_values[0]) * 60 * 60 + int(time_values[1]) * 60 + int(time_values[2])
 
-            color = Fore.GREEN if section_length_ok else Fore.RED
+                time_difference = abs(break_time_cutoff - section_length)
+                section_length_ok = section_length <= break_time_cutoff
+                difference_sign = "-" if section_length_ok else "+"
 
-            time_struct = time.gmtime(time_difference)
-            section_length_as_str = time.strftime("%H:%M:%S", time_struct)
+                color = Fore.GREEN if section_length_ok else Fore.RED
 
-            part_name = f"{alphabet[section_num].upper()} Side"
+                time_struct = time.gmtime(time_difference)
+                section_length_as_str = time.strftime("%H:%M:%S", time_struct)
 
-            print(f"{Fore.YELLOW}{i + 1:{index_format}}. {part_name.ljust(longest_title, '.')}{Style.RESET_ALL} {color}{difference_sign}{section_length_as_str}{Style.RESET_ALL} ")
+                part_name = f"{alphabet[section_num].upper()} Side"
 
-            section_num += 1
-            section_length = 0
-        else:
-            song_title = song.get('Title', Path(song.filename).stem)[0]
-            song_length = song.info.length
-            time_struct = time.gmtime(song_length)
-            song_length_as_str = time.strftime("%H:%M:%S", time_struct)
+                print(f"{Fore.YELLOW}{i + 1:{index_format}}. {part_name.ljust(longest_title, '.')}{Style.RESET_ALL} {color}{difference_sign}{section_length_as_str}{Style.RESET_ALL} ")
 
-            section_length += song_length
-            total_length += song_length
+                section_num += 1
+                section_length = 0
+            else:
+                song_title = song.get('Title', Path(song.filename).stem)[0]
+                song_length = song.info.length
+                time_struct = time.gmtime(song_length)
+                song_length_as_str = time.strftime("%H:%M:%S", time_struct)
 
-            print(f"{i + 1:{index_format}}. {song_title.replace("： ", ": ").ljust(longest_title, '.')} ({song_length_as_str})")
+                section_length += song_length
+                total_length += song_length
 
-    time_struct = time.gmtime(total_length)
-    total_length_as_str = time.strftime("%H:%M:%S", time_struct)
+                print(f"{i + 1:{index_format}}. {song_title.replace("： ", ": ").ljust(longest_title, '.')} ({song_length_as_str})")
 
-    length_prompt = "Total"
-    print(f"{padding}{length_prompt.ljust(longest_title, '.')} ({total_length_as_str})\n")
+        time_struct = time.gmtime(total_length)
+        total_length_as_str = time.strftime("%H:%M:%S", time_struct)
 
-    input("Press enter to continue...")
+        length_prompt = "Total"
+        print(f"{padding}{length_prompt.ljust(longest_title, '.')} ({total_length_as_str})\n")
+
+        mix_choice = input(f"Select something using 1-{i + 1} or [E]xit: ")
 
 def add_break(mix):
     limit = input("Section length (hh:mm:ss): ")
