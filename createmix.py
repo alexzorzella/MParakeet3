@@ -122,7 +122,7 @@ def main():
     EXPORT_TO_TXT = ".save_to_txt"
     COPY_FILES = ".export_mix"
 
-    options = [*file_names, VIEW, ADD_BREAK, COPY_FILES, EXIT]
+    options = [*file_names, VIEW, ADD_BREAK, EXPORT_TO_TXT, COPY_FILES, EXIT]
     fzf = FzfPrompt()
 
     while True:
@@ -226,10 +226,12 @@ def export_to_txt(output, mix_title, mix):
     output_mix_path = output
     output_mix_path.mkdir(parents=True, exist_ok=True)
 
-    with open(output_mix_path / f"{mix_title}.txt", "w") as file:
+    with open(output_mix_path / f"{mix_title}.txt", "w", encoding="utf-8") as file:
         for i, track in enumerate(mix):
             if isinstance(track, MP3):
-                file.write(f"{track.get('Title', Path(track.filename).stem)[0]}\n")
+                track_title = track.get('Title', Path(track.filename).stem)[0]
+                print(track_title)
+                file.write(f"{track_title}\n")
             elif isinstance(track, str):
                 file.write(f"{track}\n")
 
