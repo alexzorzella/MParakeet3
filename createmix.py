@@ -57,7 +57,7 @@ def main():
     file_name_to_audio_file = defaultdict()
 
     for audio_file in audio_files:
-        track_name = audio_file.get('Title', 'Unknown Title')[0]
+        track_name = audio_file.get('Title', Path(audio_file.filename).stem)[0]
 
         file_names.append(track_name)
         file_name_to_audio_file[track_name] = audio_file
@@ -81,7 +81,7 @@ def main():
                     best_match = 0
 
                     for audio_track in audio_files:
-                        match_ratio = SequenceMatcher(None, audio_track.get('Title', 'Unknown Title')[0],
+                        match_ratio = SequenceMatcher(None, audio_track.get('Title', Path(track.filename).stem)[0],
                                                       processed_line).ratio()
 
                         if match_ratio > best_match:
@@ -99,7 +99,7 @@ def main():
             mix_audio_files = [MP3(file, ID3=EasyID3) for file in mix_tracks]
 
             for audio_file in mix_audio_files:
-                mix.append(file_name_to_audio_file[audio_file.get('Title', 'Unknown Title')[0]])
+                mix.append(file_name_to_audio_file[audio_file.get('Title', Path(audio_file.filename).stem)[0]])
 
             print(f"Loaded {len(mix)} tracks from {mix_title}")
         else:
@@ -119,15 +119,18 @@ def main():
     EXIT = ".exit"
     VIEW = ".mix"
     ADD_BREAK = ".add_break"
-    SAVE_AND_CLOSE = ".save"
+    EXPORT_TO_TXT = ".save_to_txt"
+    COPY_FILES = ".export_mix"
 
-    options = [*file_names, VIEW, ADD_BREAK, SAVE_AND_CLOSE, EXIT]
+    options = [*file_names, VIEW, ADD_BREAK, COPY_FILES, EXIT]
     fzf = FzfPrompt()
 
     while True:
         selected = fzf.prompt(options)
+
         if len(selected) != 1:
             continue
+
         selected = selected[0]
 
         if selected == VIEW:
@@ -136,7 +139,11 @@ def main():
         elif selected == ADD_BREAK:
             add_break(mix)
             continue
-        elif selected == SAVE_AND_CLOSE:
+        elif selected == EXPORT_TO_TXT:
+            export_to_txt(output, mix_title, mix)
+            continue
+        elif selected == COPY_FILES:
+            copy_files(output, mix_title, mix)
             break
         elif selected == EXIT:
             return
@@ -144,17 +151,10 @@ def main():
         selected = file_name_to_audio_file[selected]
         mix.append(selected)
 
-    output_mix_path = output / mix_title
-    output_mix_path.mkdir(parents=True, exist_ok=True)
-    for i, file in enumerate(mix):
-        filepath = Path(file.filename)
-        output_path = output_mix_path / filepath.name
-        run_ffmpeg(track_num=i + 1, album=mix_title, source=filepath, destination=output_path)
-
 def view(mix):
     print()
 
-    longest_title = max(len(song.get('Title', 'Unknown Title')[0]) for song in mix if isinstance(song, MP3)) + 10
+    longest_title = max(len(song.get('Title', Path(song.filename).stem)[0]) for song in mix if isinstance(song, MP3)) + 10
     section_num = 0
     section_length: float = 0
     total_length: float = 0
@@ -197,7 +197,7 @@ def view(mix):
             section_num += 1
             section_length = 0
         else:
-            song_title = song.get('Title', 'Unknown Title')[0]
+            song_title = song.get('Title', Path(song.filename).stem)[0]
             song_length = song.info.length
             time_struct = time.gmtime(song_length)
             song_length_as_str = time.strftime("%H:%M:%S", time_struct)
@@ -221,6 +221,26 @@ def add_break(mix):
     mix.append(f".break {limit}")
 
 alphabet = "abcdefghijklknopqrstuvwxyz"
+
+def export_to_txt(output, mix_title, mix):
+    output_mix_path = output
+    output_mix_path.mkdir(parents=True, exist_ok=True)
+
+    with open(output_mix_path / f"{mix_title}.txt", "w") as file:
+        for i, track in enumerate(mix):
+            if isinstance(track, MP3):
+                file.write(f"{track.get('Title', Path(track.filename).stem)[0]}\n")
+            elif isinstance(track, str):
+                file.write(f"{track}\n")
+
+def copy_files(output, mix_title, mix):
+    output_mix_path = output / mix_title
+    output_mix_path.mkdir(parents=True, exist_ok=True)
+
+    for i, file in enumerate(mix):
+        filepath = Path(file.filename)
+        output_path = output_mix_path / filepath.name
+        run_ffmpeg(track_num=i + 1, album=mix_title, source=filepath, destination=output_path)
 
 if __name__ == "__main__":
     main()
