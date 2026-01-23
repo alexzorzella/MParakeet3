@@ -168,7 +168,18 @@ def view(mix):
 
     for i, song in enumerate(mix):
         if not isinstance(song, MP3):
-            break_time_cutoff: int = int(song.split(" ")[1])
+            break_time_cutoff_raw = song.split(" ")[1]
+
+            time_values = break_time_cutoff_raw.split(":")
+
+            break_time_cutoff: int = 0
+
+            if len(time_values) == 1:
+                break_time_cutoff = int(time_values[0])
+            elif len(time_values) == 2:
+                break_time_cutoff = int(time_values[0]) * 60 + int(time_values[0])
+            elif len(time_values) == 3:
+                break_time_cutoff = int(time_values[0]) * 60 * 60 + int(time_values[1]) * 60 + int(time_values[2])
 
             time_difference = abs(break_time_cutoff - section_length)
             section_length_ok = section_length <= break_time_cutoff
@@ -205,12 +216,9 @@ def view(mix):
     input("Press enter to continue...")
 
 def add_break(mix):
-    limit = input("Section length (mm:ss): ")
+    limit = input("Section length (hh:mm:ss): ")
 
-    minutes, seconds = map(int, limit.split(":"))
-    total_seconds = minutes * 60 + seconds
-
-    mix.append(f".break {total_seconds}")
+    mix.append(f".break {limit}")
 
 alphabet = "abcdefghijklknopqrstuvwxyz"
 
