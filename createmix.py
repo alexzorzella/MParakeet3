@@ -300,9 +300,25 @@ def view(mix):
             print(action_message)
 
 def add_break(mix):
-    limit = input("Section length (hh:mm:ss): ")
+    while True:
+        limit = input("Section length (hh:mm:ss) or [E]xit: ")
 
-    mix.append(f".break {limit}")
+        if limit.strip().lower() == "e":
+            break
+
+        try:
+            time_values = limit.split(":")
+
+            if len(time_values) > 3 or len(time_values) <= 0:
+                continue
+            else:
+                for i, value in enumerate(time_values):
+                    int(value)
+
+                mix.append(f".break {limit}")
+                return
+        except:
+            pass
 
 alphabet = "abcdefghijklknopqrstuvwxyz"
 
