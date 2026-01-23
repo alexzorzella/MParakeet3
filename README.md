@@ -20,10 +20,10 @@ options:
 ```
 
 ## Mass File Conversion
-`mparakeet3.py` allows you to convert all files in a passed directory to a passed filetype. The folder track limit automatically partitions the music into numbered folders to support older MP3 players with limits on the maximum number of tracks a folder can contain. A folder named 'Socrates' Mix' with 250 songs and a 100 track limit will be partitioned into folders `Socrates' Mix (1-100)`, `Socrates' Mix (101-200)`, and `Socrates' Mix (201-250)`.
+`encode.py` allows you to convert all files in a passed directory to a passed filetype. The folder track limit automatically partitions the music into numbered folders to support older MP3 players with limits on the maximum number of tracks a folder can contain. A folder named 'Socrates' Mix' with 250 songs and a 100 track limit will be partitioned into folders `Socrates' Mix (1-100)`, `Socrates' Mix (101-200)`, and `Socrates' Mix (201-250)`.
 
 ```
-mparakeet3.py [-h] [-s SOURCE] [-o OUTPUT] [-t MAX_THREADS] [-l FOLDER_TRACK_LIMIT] [-f FILETYPE]
+encode.py [-h] [-s SOURCE] [-o OUTPUT] [-t MAX_THREADS] [-l FOLDER_TRACK_LIMIT] [-f FILETYPE]
 
 options:
   -h, --help            
