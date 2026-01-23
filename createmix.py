@@ -16,6 +16,8 @@ from ottlog import logger
 from sconfig import parse_config_with_defaults
 from ffmparakeet import run_ffmpeg
 
+from colorama import Fore
+from colorama import Style
 
 def main():
     parser = argparse.ArgumentParser()
@@ -115,10 +117,11 @@ def main():
         return
 
     EXIT = ".exit"
-    SHOW = ".show"
+    VIEW = ".mix"
+    ADD_BREAK = ".add_break"
     SAVE_AND_CLOSE = ".save"
 
-    options = [*file_names, SHOW, SAVE_AND_CLOSE, EXIT]
+    options = [*file_names, VIEW, ADD_BREAK, SAVE_AND_CLOSE, EXIT]
     fzf = FzfPrompt()
 
     while True:
@@ -127,36 +130,11 @@ def main():
             continue
         selected = selected[0]
 
-        if selected == SHOW:
-            print()
-
-            longest_title = max(len(song.get('Title', 'Unknown Title')[0]) for song in mix) + 10
-            total_length: float = 0
-
-            index_format = "02" if len(mix) >= 10 else "0"
-            padding = re.sub('.', ' ', f"{len(mix):{index_format}}. ")
-
-            title_a = "Song Title"
-            title_b = "Length"
-            print(f"{padding}{title_a.ljust(longest_title)} {title_b}")
-
-            for i, song in enumerate(mix):
-                song_title = song.get('Title', 'Unknown Title')[0]
-                song_length = song.info.length
-                time_struct = time.gmtime(song_length)
-                song_length_as_str = time.strftime("%H:%M:%S", time_struct)
-
-                total_length += song_length
-
-                print(f"{i + 1:{index_format}}. {song_title.ljust(longest_title, '.')} ({song_length_as_str})")
-
-            time_struct = time.gmtime(total_length)
-            total_length_as_str = time.strftime("%H:%M:%S", time_struct)
-
-            length_prompt = "Total"
-            print(f"{padding}{length_prompt.ljust(longest_title, '.')} ({total_length_as_str})\n")
-
-            input("Press enter to continue...")
+        if selected == VIEW:
+            view(mix)
+            continue
+        elif selected == ADD_BREAK:
+            add_break(mix)
             continue
         elif selected == SAVE_AND_CLOSE:
             break
@@ -173,6 +151,68 @@ def main():
         output_path = output_mix_path / filepath.name
         run_ffmpeg(track_num=i + 1, album=mix_title, source=filepath, destination=output_path)
 
+def view(mix):
+    print()
+
+    longest_title = max(len(song.get('Title', 'Unknown Title')[0]) for song in mix if isinstance(song, MP3)) + 10
+    section_num = 0
+    section_length: float = 0
+    total_length: float = 0
+
+    index_format = "02" if len(mix) >= 10 else "0"
+    padding = re.sub('.', ' ', f"{len(mix):{index_format}}. ")
+
+    title_a = "Song Title"
+    title_b = "Length"
+    print(f"{padding}{title_a.ljust(longest_title)} {title_b}")
+
+    for i, song in enumerate(mix):
+        if not isinstance(song, MP3):
+            break_time_cutoff: int = int(song.split(" ")[1])
+
+            time_difference = abs(break_time_cutoff - section_length)
+            section_length_ok = section_length <= break_time_cutoff
+            difference_sign = "-" if section_length_ok else "+"
+
+            color = Fore.GREEN if section_length_ok else Fore.RED
+
+            time_struct = time.gmtime(time_difference)
+            section_length_as_str = time.strftime("%H:%M:%S", time_struct)
+
+            part_name = f"{alphabet[section_num].upper()} Side"
+
+            print(f"{Fore.YELLOW}{i + 1:{index_format}}. {part_name.ljust(longest_title, '.')}{Style.RESET_ALL} {color}{difference_sign}{section_length_as_str}{Style.RESET_ALL} ")
+
+            section_num += 1
+            section_length = 0
+        else:
+            song_title = song.get('Title', 'Unknown Title')[0]
+            song_length = song.info.length
+            time_struct = time.gmtime(song_length)
+            song_length_as_str = time.strftime("%H:%M:%S", time_struct)
+
+            section_length += song_length
+            total_length += song_length
+
+            print(f"{i + 1:{index_format}}. {song_title.replace("： ", ": ").ljust(longest_title, '.')} ({song_length_as_str})")
+
+    time_struct = time.gmtime(total_length)
+    total_length_as_str = time.strftime("%H:%M:%S", time_struct)
+
+    length_prompt = "Total"
+    print(f"{padding}{length_prompt.ljust(longest_title, '.')} ({total_length_as_str})\n")
+
+    input("Press enter to continue...")
+
+def add_break(mix):
+    limit = input("Section length (mm:ss): ")
+
+    minutes, seconds = map(int, limit.split(":"))
+    total_seconds = minutes * 60 + seconds
+
+    mix.append(f".break {total_seconds}")
+
+alphabet = "abcdefghijklknopqrstuvwxyz"
 
 if __name__ == "__main__":
     main()
