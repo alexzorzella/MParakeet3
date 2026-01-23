@@ -46,7 +46,7 @@ def run_ffmpeg(
     command.append("-y")
     command.append(str(destination))
 
-    subprocess.run(command, shell=True)
+    subprocess.run(command, check=True) # shell=True works on Windows
 
 ffmpeg_encoders = {
     "mp3": "libmp3lame",
@@ -73,3 +73,15 @@ ffmpeg_encoders = {
     "webm": "libopus",
     "raw": "pcm_s16le"
 }
+
+import sys
+
+def get_os():
+    platform = sys.platform
+
+    if platform == "win32":
+        return "windows"
+    elif platform == "darwin":
+        return "macos"
+
+    return "linux"
