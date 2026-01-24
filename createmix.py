@@ -126,7 +126,7 @@ def view(mix: Mix):
 
         title_a = "Song Title"
         title_b = "Length"
-        print(f"{padding}{title_a.ljust(longest_title)} {title_b}")
+        print(f"{padding}{Fore.GREEN}{mix.mix_title}\n\n{Style.RESET_ALL}{Fore.YELLOW}{padding}{title_a.ljust(longest_title)} {title_b}{Style.RESET_ALL}")
 
         for i, song in enumerate(mix.tracks):
             if not isinstance(song, MP3):
@@ -178,7 +178,7 @@ def view(mix: Mix):
         mix_choice = -1
 
         while mix_choice < 1 or mix_choice > i + 1:
-            mix_choice_input = input(f"Select something using [1]-[{i + 1}] or [E]xit: ").lower()
+            mix_choice_input = input(f"Select a track or break using 1-{i + 1} or [E]xit: ").lower()
 
             if mix_choice_input == "e":
                 return
