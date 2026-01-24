@@ -89,5 +89,22 @@ class Mix:
 
         return index_format, padding
 
+    def track_names(self):
+        result = []
+
+        section_num = 0
+
+        for i, song in enumerate(self.tracks):
+            if not isinstance(song, MP3):
+                part_name = f"{alphabet[section_num].upper()} Side"
+                result.append(part_name)
+
+                section_num += 1
+            else:
+                song_title = song.get('Title', Path(song.filename).stem)[0]
+                result.append(song_title)
+
+        return result
+
 alphabet = "abcdefghijklknopqrstuvwxyz"
 colors = [ Fore.RED, Fore.YELLOW, Fore.GREEN, Fore.CYAN, Fore.MAGENTA ]

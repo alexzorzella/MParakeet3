@@ -1,4 +1,3 @@
-import re
 import time
 import argparse
 import pathvalidate
@@ -14,6 +13,12 @@ from ffmparakeet import run_ffmpeg
 
 from colorama import Fore
 from colorama import Style
+
+EXIT = ".exit"
+VIEW = ".mix"
+ADD_BREAK = ".add_break"
+EXPORT_TO_TXT = ".write_to_txt"
+COPY_FILES = ".export_mix"
 
 def main():
     ################################## Setup ##################################
@@ -70,12 +75,6 @@ def main():
 
     ################################## Mix Editor ##################################
 
-    EXIT = ".exit"
-    VIEW = ".mix"
-    ADD_BREAK = ".add_break"
-    EXPORT_TO_TXT = ".write_to_txt"
-    COPY_FILES = ".export_mix"
-
     options = [*loader.file_names, VIEW, ADD_BREAK, EXPORT_TO_TXT, COPY_FILES, EXIT]
     fzf = FzfPrompt()
 
@@ -107,6 +106,8 @@ def main():
 
     ##############################################################################
 
+BACK_TO_MIX = ".back_to_mix"
+
 def view(mix: Mix):
     print("\n" * 100)
 
@@ -117,17 +118,29 @@ def view(mix: Mix):
         mix_choice = -1
 
         while mix_choice < 1 or mix_choice > total_tracks:
-            mix_choice_input = input(f"Select a track or break using 1-{total_tracks} or [E]xit: ").lower()
+            mix_choice_input = input(f"Select a track or break using 1-{total_tracks}, [S]earch Mix, or [E]xit: ").lower()
 
             if mix_choice_input == "e":
                 return
+            elif mix_choice_input == "s":
+                track_names = mix.track_names()
+                options = [*track_names, BACK_TO_MIX]
+                fzf = FzfPrompt()
 
-            try:
-                mix_choice = int(mix_choice_input)
-            except:
+                selected = fzf.prompt(options)[0]
+
+                if selected == BACK_TO_MIX:
+                    continue
+
+                mix_choice = track_names.index(selected)
+
                 pass
-
-        mix_choice -= 1
+            else:
+                try:
+                    mix_choice = int(mix_choice_input)
+                    mix_choice -= 1
+                except:
+                    pass
 
         selection = mix.tracks[mix_choice]
 
