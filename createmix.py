@@ -4,14 +4,10 @@ import argparse
 import pathvalidate
 
 from pathlib import Path
-from collections import defaultdict
-
-from mutagen.mp3 import MP3
-from mutagen.easyid3 import EasyID3
-
-from difflib import SequenceMatcher
 from pyfzf.pyfzf import FzfPrompt
 
+from mix import Mix
+from loader import Loader
 from ottlog import logger
 from sconfig import parse_config_with_defaults
 from ffmparakeet import run_ffmpeg
@@ -20,6 +16,8 @@ from colorama import Fore
 from colorama import Style
 
 def main():
+    ################################## Setup ##################################
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--load-mix", type=str, help="Load a mix from a directory or file")
     parser.add_argument("-s", "--search", type=str, help="Search from directory")
@@ -47,68 +45,19 @@ def main():
         logger.error(f"Search directory does not exist: {search}")
         return
 
-    output.mkdir(parents=True, exist_ok=True)
+    loader = Loader(search, output)
 
-    files = list(search.rglob("*.mp3"))
+    mix_title = ""
 
-    audio_files = [MP3(file, ID3=EasyID3) for file in files]
-    file_names = []
+    if args.name is not None:
+        mix_title = args.name
+    elif args.load_mix is not None:
+        mix_title = Path(args.load_mix).stem
 
-    file_name_to_audio_file = defaultdict()
-
-    for audio_file in audio_files:
-        track_name = audio_file.get('Title', Path(audio_file.filename).stem)[0]
-
-        file_names.append(track_name)
-        file_name_to_audio_file[track_name] = audio_file
-
-    mix_title = "" if args.name is None else args.name
-    mix = []
-
-    ###########################################################################################
+    mix = Mix(mix_title=mix_title)
 
     if args.load_mix is not None:
-        loaded_mix_path = Path(args.load_mix)
-
-        if loaded_mix_path.is_file():
-            mix_title = loaded_mix_path.stem
-
-            with open(loaded_mix_path, 'r') as file:
-                for line in file:
-                    if line.split(" ")[0] == ".break":
-                        mix.append(line)
-                    else:
-                        processed_line = line.strip()
-
-                        track = None
-                        best_match = 0
-
-                        for audio_track in audio_files:
-                            match_ratio = SequenceMatcher(None, audio_track.get('Title', Path(audio_track.filename).stem)[0],
-                                                          processed_line).ratio()
-
-                            if match_ratio > best_match:
-                                best_match = match_ratio
-                                track = audio_track
-
-                        if track is not None:
-                            mix.append(track)
-
-            input(f"Loaded {len(mix)} tracks from {mix_title}.\nPress enter to continue")
-        elif loaded_mix_path.is_dir():
-            mix_title = loaded_mix_path.stem
-
-            mix_tracks = list(loaded_mix_path.rglob("*.mp3"))
-            mix_audio_files = [MP3(file, ID3=EasyID3) for file in mix_tracks]
-
-            for audio_file in mix_audio_files:
-                mix.append(file_name_to_audio_file[audio_file.get('Title', Path(audio_file.filename).stem)[0]])
-
-            print(f"Loaded {len(mix)} tracks from {mix_title}")
-        else:
-            print(f"Didn't find a file or directory to load a mix from at {loaded_mix_path}.\nPress enter to continue")
-
-    ###########################################################################################
+        mix.tracks = loader.load_mix(Path(args.load_mix))
 
     while mix_title.strip() == "":
         inp = input("Enter mix title :3 : ")
@@ -119,13 +68,15 @@ def main():
     if ok.lower() != "y":
         return
 
+    ################################## Mix Editor ##################################
+
     EXIT = ".exit"
     VIEW = ".mix"
     ADD_BREAK = ".add_break"
     EXPORT_TO_TXT = ".write_to_txt"
     COPY_FILES = ".export_mix"
 
-    options = [*file_names, VIEW, ADD_BREAK, EXPORT_TO_TXT, COPY_FILES, EXIT]
+    options = [*loader.file_names, VIEW, ADD_BREAK, EXPORT_TO_TXT, COPY_FILES, EXIT]
     fzf = FzfPrompt()
 
     while True:
@@ -151,28 +102,28 @@ def main():
         elif selected == EXIT:
             return
 
-        selected = file_name_to_audio_file[selected]
-        mix.append(selected)
+        selected = loader.file_name_to_audio_file[selected]
+        mix.tracks.append(selected)
 
-def view(mix):
-    mix_choice = ""
+        ############################################################################
 
+def view(mix: Mix):
     print("\n" * 100)
 
     while True:
-        longest_title = max(len(song.get('Title', Path(song.filename).stem)[0]) for song in mix if isinstance(song, MP3)) + 10
+        longest_title = max(len(song.get('Title', Path(song.filename).stem)[0]) for song in mix.tracks if isinstance(song, MP3)) + 10
         section_num = 0
         section_length: float = 0
         total_length: float = 0
 
-        index_format = "02" if len(mix) >= 10 else "0"
-        padding = re.sub('.', ' ', f"{len(mix):{index_format}}. ")
+        index_format = "02" if len(mix.tracks) >= 10 else "0"
+        padding = re.sub('.', ' ', f"{len(mix.tracks):{index_format}}. ")
 
         title_a = "Song Title"
         title_b = "Length"
         print(f"{padding}{title_a.ljust(longest_title)} {title_b}")
 
-        for i, song in enumerate(mix):
+        for i, song in enumerate(mix.tracks):
             if not isinstance(song, MP3):
                 break_time_cutoff_raw = song.split(" ")[1]
 
@@ -234,7 +185,7 @@ def view(mix):
 
         mix_choice -= 1
 
-        selection = mix[mix_choice]
+        selection = mix.tracks[mix_choice]
 
         if not isinstance(selection, MP3):
             selection_message = "break"
@@ -267,8 +218,8 @@ def view(mix):
                 except:
                     pass
 
-            mix.remove(selection)
-            mix.insert(insert_at - 1, selection)
+            mix.tracks.remove(selection)
+            mix.tracks.insert(insert_at - 1, selection)
 
             action_message = f"Moved {selection_message} to {insert_at}"
         elif song_action == "g":
@@ -281,15 +232,15 @@ def view(mix):
             next_song_index = mix_choice + 1
             next_song = None
 
-            while next_song_index < len(mix) and not isinstance(next_song, MP3):
-                next_song = mix[next_song_index]
+            while next_song_index < len(mix.tracks) and not isinstance(next_song, MP3):
+                next_song = mix.tracks[next_song_index]
                 next_song_index += 1
 
             if next_song is not None:
                 next_song_path = next_song.filename
                 preview_transition(selected_song_path, next_song_path, preview_length=10)
         elif song_action == "r":
-            mix.remove(selection)
+            mix.tracks.remove(selection)
             action_message = f"Removed {selection_message} from the mix"
         elif song_action == "e":
             pass
