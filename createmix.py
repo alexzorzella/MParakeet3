@@ -136,7 +136,7 @@ def view(mix: Mix):
         else:
             selection_message = selection.get('Title', Path(selection.filename).stem)[0]
 
-        print(f"Selecting {selection_message}")
+        print(f"\nSelecting {Fore.GREEN}{selection_message}{Style.RESET_ALL}")
 
         song_action = ""
 
@@ -145,9 +145,9 @@ def view(mix: Mix):
         while song_action not in options:
             try:
                 if isinstance(selection, MP3):
-                    song_action = input("[M]ove\n[G]roup\n[P]lay\nPreview [T]ransition\n[R]emove From Mix\n[E]xit\n\n").lower()
+                    song_action = input(f"[M]ove, [G]roup, [P]lay, Preview [T]ransition, [R]emove From Mix, or [E]xit\n\n").lower()
                 else:
-                    song_action = input("[M]ove\n[G]roup\n[R]emove From Mix\n[E]xit\n\n").lower()
+                    song_action = input("[M]ove, [G]roup, [R]emove From Mix, or [E]xit\n\n").lower()
             except:
                 pass
 
