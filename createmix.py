@@ -237,7 +237,7 @@ def view(mix):
         selection = mix[mix_choice]
 
         if not isinstance(selection, MP3):
-            selection_message = "Break"
+            selection_message = "break"
         else:
             selection_message = selection.get('Title', Path(selection.filename).stem)[0]
 
