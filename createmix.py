@@ -111,74 +111,13 @@ def view(mix: Mix):
     print("\n" * 100)
 
     while True:
-        longest_title = max(len(song.get('Title', Path(song.filename).stem)[0]) for song in mix.tracks if isinstance(song, MP3)) + 20
-        section_num = 0
-        section_length: float = 0
-        total_length: float = 0
-
-        index_format = "0"
-        num_digits = len(str(len(mix.tracks)))
-
-        if num_digits > 1:
-            index_format += str(num_digits)
-
-        padding = re.sub('.', ' ', f"{len(mix.tracks):{index_format}}. ")
-
-        title_a = "Song Title"
-        title_b = "Length"
-        print(f"{padding}{Fore.GREEN}{mix.mix_title}\n\n{Style.RESET_ALL}{Fore.YELLOW}{padding}{title_a.ljust(longest_title)} {title_b}{Style.RESET_ALL}")
-
-        for i, song in enumerate(mix.tracks):
-            if not isinstance(song, MP3):
-                break_time_cutoff_raw = song.split(" ")[1]
-
-                time_values = break_time_cutoff_raw.split(":")
-
-                break_time_cutoff: int = 0
-
-                if len(time_values) == 1:
-                    break_time_cutoff = int(time_values[0])
-                elif len(time_values) == 2:
-                    break_time_cutoff = int(time_values[0]) * 60 + int(time_values[0])
-                elif len(time_values) == 3:
-                    break_time_cutoff = int(time_values[0]) * 60 * 60 + int(time_values[1]) * 60 + int(time_values[2])
-
-                time_difference = abs(break_time_cutoff - section_length)
-                section_length_ok = section_length <= break_time_cutoff
-                difference_sign = "-" if section_length_ok else "+"
-
-                color = Fore.GREEN if section_length_ok else Fore.RED
-
-                time_struct = time.gmtime(time_difference)
-                section_length_as_str = time.strftime("%H:%M:%S", time_struct)
-
-                part_name = f"{alphabet[section_num].upper()} Side"
-
-                print(f"{Fore.YELLOW}{i + 1:{index_format}}. {part_name.ljust(longest_title, '.')}{Style.RESET_ALL} {color}{difference_sign}{section_length_as_str}{Style.RESET_ALL} ")
-
-                section_num += 1
-                section_length = 0
-            else:
-                song_title = song.get('Title', Path(song.filename).stem)[0]
-                song_length = song.info.length
-                time_struct = time.gmtime(song_length)
-                song_length_as_str = time.strftime("%H:%M:%S", time_struct)
-
-                section_length += song_length
-                total_length += song_length
-
-                print(f"{i + 1:{index_format}}. {song_title.replace("： ", ": ").ljust(longest_title, '.')} ({song_length_as_str})")
-
-        time_struct = time.gmtime(total_length)
-        total_length_as_str = time.strftime("%H:%M:%S", time_struct)
-
-        length_prompt = "Total"
-        print(f"{padding}{length_prompt.ljust(longest_title, '.')} ({total_length_as_str})\n")
+        mix.display()
+        total_tracks = len(mix.tracks)
 
         mix_choice = -1
 
-        while mix_choice < 1 or mix_choice > i + 1:
-            mix_choice_input = input(f"Select a track or break using 1-{i + 1} or [E]xit: ").lower()
+        while mix_choice < 1 or mix_choice > total_tracks:
+            mix_choice_input = input(f"Select a track or break using 1-{total_tracks} or [E]xit: ").lower()
 
             if mix_choice_input == "e":
                 return
@@ -217,9 +156,9 @@ def view(mix: Mix):
         if song_action == "m":
             insert_at = -1
 
-            while insert_at < 1 or insert_at > i + 2:
+            while insert_at < 1 or insert_at > total_tracks + 1:
                 try:
-                    insert_at = int(input(f"Move to [1]-[{i + 2}]: "))
+                    insert_at = int(input(f"Move to [1]-[{total_tracks + 1}]: "))
                 except:
                     pass
 
@@ -253,6 +192,7 @@ def view(mix: Mix):
         print("\n" * 100)
 
         if action_message != "":
+            _, padding = mix.get_formatting()
             print(f"{Fore.YELLOW}{padding}{action_message}{Style.RESET_ALL}\n")
 
 def add_break(mix):
@@ -275,8 +215,6 @@ def add_break(mix):
                 return
         except:
             pass
-
-alphabet = "abcdefghijklknopqrstuvwxyz"
 
 def export_to_txt(output, mix_title, mix):
     output_mix_path = output
