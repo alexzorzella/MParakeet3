@@ -12,6 +12,9 @@ class Mix:
     def __init__(self, mix_title):
         self.mix_title = mix_title
 
+    def add_track_or_break(self, new_track):
+        self.tracks.append(new_track)
+
     def display(self):
         longest_title = max(
             len(song.get('Title', Path(song.filename).stem)[0]) for song in self.tracks if isinstance(song, MP3)) + 20
@@ -87,3 +90,4 @@ class Mix:
         return index_format, padding
 
 alphabet = "abcdefghijklknopqrstuvwxyz"
+colors = [ Fore.RED, Fore.YELLOW, Fore.GREEN, Fore.CYAN, Fore.MAGENTA ]

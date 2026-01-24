@@ -103,7 +103,7 @@ def main():
             return
 
         selected = loader.file_name_to_audio_file[selected]
-        mix.tracks.append(selected)
+        mix.add_track_or_break(selected)
 
     ##############################################################################
 
