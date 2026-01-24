@@ -42,7 +42,7 @@ def main():
     output = Path(output)
 
     if not search.exists() or not search.is_dir():
-        logger.error(f"Search directory does not exist: {search}")
+        logger.error(f"Search directory {Fore.YELLOW}{search}{Style.RESET_ALL} does not exist")
         return
 
     loader = Loader(search, output)
@@ -63,7 +63,7 @@ def main():
         inp = input("Enter mix title :3 : ")
         mix_title = pathvalidate.sanitize_filename(inp).strip()
 
-    ok = input(f"Searching {search} and outputting to {output / mix_title}. OK? (y/n): ")
+    ok = input(f"Searching {Fore.YELLOW}{search}{Style.RESET_ALL} and outputting to {Fore.YELLOW}{output / mix_title}{Style.RESET_ALL}. OK? (y/n): ")
 
     if ok.lower() != "y":
         return
@@ -105,18 +105,23 @@ def main():
         selected = loader.file_name_to_audio_file[selected]
         mix.tracks.append(selected)
 
-        ############################################################################
+    ##############################################################################
 
 def view(mix: Mix):
     print("\n" * 100)
 
     while True:
-        longest_title = max(len(song.get('Title', Path(song.filename).stem)[0]) for song in mix.tracks if isinstance(song, MP3)) + 10
+        longest_title = max(len(song.get('Title', Path(song.filename).stem)[0]) for song in mix.tracks if isinstance(song, MP3)) + 20
         section_num = 0
         section_length: float = 0
         total_length: float = 0
 
-        index_format = "02" if len(mix.tracks) >= 10 else "0"
+        index_format = "0"
+        num_digits = len(str(len(mix.tracks)))
+
+        if num_digits > 1:
+            index_format += str(num_digits)
+
         padding = re.sub('.', ' ', f"{len(mix.tracks):{index_format}}. ")
 
         title_a = "Song Title"
