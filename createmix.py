@@ -297,7 +297,7 @@ def view(mix):
         print("\n" * 100)
 
         if action_message != "":
-            print(action_message)
+            print(f"{Fore.YELLOW}{padding}{action_message}{Style.RESET_ALL}\n")
 
 def add_break(mix):
     while True:
