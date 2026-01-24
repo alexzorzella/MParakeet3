@@ -79,7 +79,7 @@ def main():
     fzf = FzfPrompt()
 
     while True:
-        selected = fzf.prompt(options)
+        selected = fzf.prompt(options, '--cycle')
 
         if len(selected) != 1:
             continue
@@ -106,43 +106,15 @@ def main():
 
     ##############################################################################
 
-BACK_TO_MIX = ".back_to_mix"
-
 def view(mix: Mix):
     print("\n" * 100)
 
     while True:
         mix.display()
-        total_tracks = len(mix.tracks)
 
-        mix_choice = -1
+        mix_length = mix.mix_length()
 
-        while mix_choice < 0 or mix_choice >= total_tracks:
-            mix_choice_input = input(f"Select a track or break using 1-{total_tracks}, [S]earch Mix, or [E]xit: ").lower()
-
-            if mix_choice_input == "e":
-                return
-            elif mix_choice_input == "s":
-                track_names = mix.track_names(include_indices=True)
-                options = [*track_names, BACK_TO_MIX]
-                fzf = FzfPrompt()
-
-                selected = fzf.prompt(options)[0]
-
-                if selected == BACK_TO_MIX:
-                    continue
-
-                mix_choice = track_names.index(selected)
-
-                pass
-            else:
-                try:
-                    mix_choice = int(mix_choice_input)
-                    mix_choice -= 1
-                except:
-                    pass
-
-        selection = mix.tracks[mix_choice]
+        selection, first_track_index = mix.prompt_selection()
 
         if not isinstance(selection, MP3):
             selected_track_title = "break"
@@ -167,25 +139,14 @@ def view(mix: Mix):
         action_message = ""
 
         if song_action == "m" or song_action == "s":
-            action_name = "Move" if song_action == "m" else "Swap"
-            action_verb = "to" if song_action == "m" else "with"
+            action_prompt = "Move" if song_action == "m" else "Swap"
 
-            second_track_index = -1
-
-            while second_track_index < 1 or second_track_index > total_tracks + 1:
-                try:
-                    second_track_index = int(input(f"{action_name} {action_verb} [1]-[{total_tracks}]: "))
-                except:
-                    pass
+            second_track, second_track_index = mix.prompt_selection(action_prompt=action_prompt)
 
             if song_action == "m":
                 mix.tracks.remove(selection)
                 mix.tracks.insert(second_track_index - 1, selection)
             elif song_action == "s":
-                first_track_index = mix.tracks.index(selection)
-                second_track_index = second_track_index - 1
-                second_track = mix.tracks[second_track_index]
-
                 mix.tracks[first_track_index], mix.tracks[second_track_index] = mix.tracks[second_track_index], mix.tracks[first_track_index]
 
             if song_action == "m":
@@ -205,7 +166,7 @@ def view(mix: Mix):
         elif song_action == "t":
             selected_song_path = selection.filename
 
-            next_song_index = mix_choice + 1
+            next_song_index = first_track_index + 1
             next_song = None
 
             while next_song_index < len(mix.tracks) and not isinstance(next_song, MP3):

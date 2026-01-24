@@ -4,6 +4,8 @@ from pathlib import Path
 
 from colorama import Fore, Style
 from mutagen.mp3 import MP3
+from pyfzf import FzfPrompt
+
 
 class Mix:
     mix_title = ""
@@ -112,6 +114,49 @@ class Mix:
                 result.append(song_title_formatted)
 
         return result
+
+    def mix_length(self):
+        return len(self.tracks)
+
+    BACK_TO_MIX = ".back_to_mix"
+
+    def prompt_selection(self, action_prompt=""):
+        if action_prompt.strip() != "":
+            action_prompt = f"{action_prompt.strip()} "
+
+        mix_length = len(self.tracks)
+
+        mix_choice = -1
+
+        while mix_choice < 0 or mix_choice >= mix_length:
+            mix_choice_input = input(
+                f"Select a track or break {action_prompt}using 1-{mix_length}, [S]earch Mix, or [E]xit: ").lower()
+
+            if mix_choice_input == "e":
+                return
+            elif mix_choice_input == "s":
+                track_names = self.track_names(include_indices=True)
+                options = [*track_names, Mix.BACK_TO_MIX]
+                fzf = FzfPrompt()
+
+                selected = fzf.prompt(options, fzf_options='--cycle')
+
+                if len(selected) != 1 or selected == Mix.BACK_TO_MIX:
+                    continue
+
+                selected = selected[0]
+
+                mix_choice = track_names.index(selected)
+            else:
+                try:
+                    mix_choice = int(mix_choice_input)
+                    mix_choice -= 1
+                except:
+                    pass
+
+        selection = self.tracks[mix_choice]
+
+        return selection, mix_choice
 
 alphabet = "abcdefghijklknopqrstuvwxyz"
 colors = [ Fore.RED, Fore.YELLOW, Fore.GREEN, Fore.CYAN, Fore.MAGENTA ]
