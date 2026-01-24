@@ -266,7 +266,7 @@ def preview_transition(song_ending_path, song_starting_path, preview_length=1):
 
     song_ending_player.set_time(int(start_song_ending_at * 1000))
 
-    time.sleep(preview_length)
+    time.sleep(preview_length + 0.1)
 
     song_starting_player.play()
 
