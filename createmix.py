@@ -117,13 +117,13 @@ def view(mix: Mix):
 
         mix_choice = -1
 
-        while mix_choice < 1 or mix_choice > total_tracks:
+        while mix_choice < 0 or mix_choice >= total_tracks:
             mix_choice_input = input(f"Select a track or break using 1-{total_tracks}, [S]earch Mix, or [E]xit: ").lower()
 
             if mix_choice_input == "e":
                 return
             elif mix_choice_input == "s":
-                track_names = mix.track_names()
+                track_names = mix.track_names(include_indices=True)
                 options = [*track_names, BACK_TO_MIX]
                 fzf = FzfPrompt()
 
@@ -145,40 +145,59 @@ def view(mix: Mix):
         selection = mix.tracks[mix_choice]
 
         if not isinstance(selection, MP3):
-            selection_message = "break"
+            selected_track_title = "break"
         else:
-            selection_message = selection.get('Title', Path(selection.filename).stem)[0]
+            selected_track_title = selection.get('Title', Path(selection.filename).stem)[0]
 
-        print(f"\nSelecting {Fore.GREEN}{selection_message}{Style.RESET_ALL}")
+        print(f"\nSelecting {Fore.GREEN}{selected_track_title}{Style.RESET_ALL}")
 
         song_action = ""
 
-        options = ["m", "g", "p", "t", "r", "e"] if isinstance(selection, MP3) else ["m", "g", "r", "e"]
+        options = ["m", "s", "g", "p", "t", "r", "e"] if isinstance(selection, MP3) else ["m", "s", "g", "r", "e"]
 
         while song_action not in options:
             try:
                 if isinstance(selection, MP3):
-                    song_action = input(f"[M]ove, [G]roup, [P]lay, Preview [T]ransition, [R]emove From Mix, or [E]xit\n\n").lower()
+                    song_action = input(f"[M]ove, [S]wap, [G]roup, [P]lay, Preview [T]ransition, [R]emove From Mix, or [E]xit: ").lower()
                 else:
-                    song_action = input("[M]ove, [G]roup, [R]emove From Mix, or [E]xit\n\n").lower()
+                    song_action = input("[M]ove, [S]wap, [G]roup, [R]emove From Mix, or [E]xit: ").lower()
             except:
                 pass
 
         action_message = ""
 
-        if song_action == "m":
-            insert_at = -1
+        if song_action == "m" or song_action == "s":
+            action_name = "Move" if song_action == "m" else "Swap"
+            action_verb = "to" if song_action == "m" else "with"
 
-            while insert_at < 1 or insert_at > total_tracks + 1:
+            second_track_index = -1
+
+            while second_track_index < 1 or second_track_index > total_tracks + 1:
                 try:
-                    insert_at = int(input(f"Move to [1]-[{total_tracks + 1}]: "))
+                    second_track_index = int(input(f"{action_name} {action_verb} [1]-[{total_tracks}]: "))
                 except:
                     pass
 
-            mix.tracks.remove(selection)
-            mix.tracks.insert(insert_at - 1, selection)
+            if song_action == "m":
+                mix.tracks.remove(selection)
+                mix.tracks.insert(second_track_index - 1, selection)
+            elif song_action == "s":
+                first_track_index = mix.tracks.index(selection)
+                second_track_index = second_track_index - 1
+                second_track = mix.tracks[second_track_index]
 
-            action_message = f"Moved {selection_message} to {insert_at}"
+                mix.tracks[first_track_index], mix.tracks[second_track_index] = mix.tracks[second_track_index], mix.tracks[first_track_index]
+
+            if song_action == "m":
+                action_message = f"Moved {selected_track_title} to {second_track_index}"
+            elif song_action == "s":
+                if not isinstance(selection, MP3):
+                    second_track_title = "break"
+                else:
+                    second_track_title = second_track.get('Title', Path(second_track.filename).stem)[0]
+
+                action_message = f"Swapped {selected_track_title} with {second_track_title}"
+
         elif song_action == "g":
             pass
         elif song_action == "p":
@@ -198,7 +217,7 @@ def view(mix: Mix):
                 preview_transition(selected_song_path, next_song_path, preview_length=10)
         elif song_action == "r":
             mix.tracks.remove(selection)
-            action_message = f"Removed {selection_message} from the mix"
+            action_message = f"Removed {selected_track_title} from the mix"
         elif song_action == "e":
             pass
 

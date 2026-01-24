@@ -30,6 +30,8 @@ class Mix:
             f"{padding}{Fore.GREEN}{self.mix_title}\n\n{Style.RESET_ALL}{Fore.YELLOW}{padding}{title_a.ljust(longest_title)} {title_b}{Style.RESET_ALL}")
 
         for i, song in enumerate(self.tracks):
+            index_str = f"{i + 1:{index_format}}."
+
             if not isinstance(song, MP3):
                 break_time_cutoff_raw = song.split(" ")[1]
 
@@ -56,7 +58,7 @@ class Mix:
                 part_name = f"{alphabet[section_num].upper()} Side"
 
                 print(
-                    f"{Fore.YELLOW}{i + 1:{index_format}}. {part_name.ljust(longest_title, '.')}{Style.RESET_ALL} {color}{difference_sign}{section_length_as_str}{Style.RESET_ALL} ")
+                    f"{Fore.YELLOW}{index_str} {part_name.ljust(longest_title, '.')}{Style.RESET_ALL} {color}{difference_sign}{section_length_as_str}{Style.RESET_ALL} ")
 
                 section_num += 1
                 section_length = 0
@@ -70,7 +72,7 @@ class Mix:
                 total_length += song_length
 
                 print(
-                    f"{i + 1:{index_format}}. {song_title.replace("： ", ": ").ljust(longest_title, '.')} ({song_length_as_str})")
+                    f"{index_str} {song_title.replace("： ", ": ").ljust(longest_title, '.')} ({song_length_as_str})")
 
         time_struct = time.gmtime(total_length)
         total_length_as_str = time.strftime("%H:%M:%S", time_struct)
@@ -89,20 +91,25 @@ class Mix:
 
         return index_format, padding
 
-    def track_names(self):
+    def track_names(self, include_indices=False):
         result = []
 
         section_num = 0
 
+        index_format, _ = self.get_formatting()
+
         for i, song in enumerate(self.tracks):
+            index_str = f"{i + 1:{index_format}}. " if include_indices else ""
+
             if not isinstance(song, MP3):
-                part_name = f"{alphabet[section_num].upper()} Side"
+                part_name = f"{index_str}{alphabet[section_num].upper()} Side"
                 result.append(part_name)
 
                 section_num += 1
             else:
                 song_title = song.get('Title', Path(song.filename).stem)[0]
-                result.append(song_title)
+                song_title_formatted = f"{index_str}{song_title}"
+                result.append(song_title_formatted)
 
         return result
 
