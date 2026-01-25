@@ -176,7 +176,7 @@ def view(mix: Mix):
                 next_song_path = next_song.filename
                 preview_transition(selected_song_path, next_song_path, preview_length=10)
         elif song_action == "r":
-            mix.remove_track(selection)
+            mix.remove_track(first_track_index)
             action_message = f"Removed {selected_track_title} from the mix"
 
         print("\n" * 100)

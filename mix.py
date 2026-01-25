@@ -43,18 +43,26 @@ class Mix:
         local_index, group_index = self.track_location_by_abs_index(from_index)
         move_track = self.track_groups[group_index][local_index]
 
-        del self.track_groups[group_index][local_index]
-
-        if self.group_length(group_index) <= 0:
-            del self.track_groups[group_index]
+        self.remove_track(from_index)
 
         self.track_groups.insert(to_index, [move_track])
 
     def swap_tracks(self, first_track_index, second_track_index):
-        self.track_groups[first_track_index], self.track_groups[second_track_index] = self.track_groups[second_track_index], self.track_groups[first_track_index]
+        first_track_group_index, first_track_local_index = self.track_location_by_abs_index(first_track_index)
+        second_track_group_index, second_track_local_index = self.track_location_by_abs_index(second_track_index)
 
-    def remove_track(self, track):
-        self.track_groups.remove(track)
+        (self.track_groups[first_track_group_index][first_track_local_index],
+         self.track_groups[second_track_group_index][second_track_local_index]) = (
+            self.track_groups[second_track_group_index][second_track_local_index],
+            self.track_groups[first_track_group_index][first_track_local_index])
+
+    def remove_track(self, track_index):
+        local_index, group_index = self.track_location_by_abs_index(track_index)
+
+        del self.track_groups[group_index][local_index]
+
+        if self.group_length(group_index) <= 0:
+            del self.track_groups[group_index]
 
     def display(self):
         longest_title = max(
