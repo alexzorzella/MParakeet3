@@ -23,6 +23,16 @@ class Mix:
     def track_count(self):
         return len(self.get_tracks())
 
+    def move_track(self, move, to_index):
+        self.tracks.remove(move)
+        self.tracks.insert(to_index, move)
+
+    def swap_tracks(self, first_track_index, second_track_index):
+        self.tracks[first_track_index], self.tracks[second_track_index] = self.tracks[second_track_index], self.tracks[first_track_index]
+
+    def remove_track(self, track):
+        self.tracks.remove(track)
+
     def display(self):
         longest_title = max(
             len(song.get('Title', Path(song.filename).stem)[0]) for song in self.tracks if isinstance(song, MP3)) + 20

@@ -144,14 +144,10 @@ def view(mix: Mix):
 
             if song_action == "m":
                 _, second_track_index = mix.prompt_track_selection(action_prompt=action_prompt, include_end=True)
-
-                mix.tracks.remove(selection)
-                mix.tracks.insert(second_track_index, selection)
+                mix.move_track(move=selection, to_index=second_track_index)
             elif song_action == "s":
                 second_track, second_track_index = mix.prompt_track_selection(action_prompt=action_prompt)
-
-                mix.tracks[first_track_index], mix.tracks[second_track_index] = mix.tracks[second_track_index], mix.tracks[first_track_index]
-
+                mix.swap_tracks(first_track_index=first_track_index, second_track_index=second_track_index)
             if song_action == "m":
                 action_message = f"Moved {selected_track_title} to {second_track_index + 1}"
             elif song_action == "s":
@@ -172,15 +168,15 @@ def view(mix: Mix):
             next_song_index = first_track_index + 1
             next_song = None
 
-            while next_song_index < len(mix.tracks) and not isinstance(next_song, MP3):
-                next_song = mix.tracks[next_song_index]
+            while next_song_index < mix.track_count() and not isinstance(next_song, MP3):
+                next_song = mix.get_tracks()[next_song_index]
                 next_song_index += 1
 
             if next_song is not None:
                 next_song_path = next_song.filename
                 preview_transition(selected_song_path, next_song_path, preview_length=10)
         elif song_action == "r":
-            mix.tracks.remove(selection)
+            mix.remove_track(selection)
             action_message = f"Removed {selected_track_title} from the mix"
 
         print("\n" * 100)
@@ -213,7 +209,7 @@ def export_to_txt(output, mix_title, mix):
     output_mix_path.mkdir(parents=True, exist_ok=True)
 
     with open(output_mix_path / f"{mix_title}.txt", "w", encoding="utf-8") as file:
-        for track in mix.tracks:
+        for track in mix.get_tracks():
             if isinstance(track, MP3):
                 track_title = track.get('Title', Path(track.filename).stem)[0]
                 print(track_title)
