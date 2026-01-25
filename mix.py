@@ -58,7 +58,7 @@ class Mix:
 
     def display(self):
         longest_title = max(
-            len(song.get('Title', Path(song.filename).stem)[0]) for song in self.track_groups if isinstance(song, MP3)) + 20
+            len(song.get('Title', Path(song.filename).stem)[0]) for song in self.get_tracks() if isinstance(song, MP3)) + 20
         section_num = 0
         section_length: float = 0
         total_length: float = 0
@@ -123,12 +123,12 @@ class Mix:
 
     def get_formatting(self):
         index_format = "0"
-        num_digits = len(str(len(self.track_groups)))
+        num_digits = len(str(self.track_count()))
 
         if num_digits > 1:
             index_format += str(num_digits)
 
-        padding = re.sub('.', ' ', f"{len(self.track_groups):{index_format}}. ")
+        padding = re.sub('.', ' ', f"{self.track_count():{index_format}}. ")
 
         return index_format, padding
 
@@ -139,7 +139,7 @@ class Mix:
 
         index_format, _ = self.get_formatting()
 
-        for i, song in enumerate(self.track_groups):
+        for i, song in enumerate(self.get_tracks()):
             index_str = f"{i + 1:{index_format}}. " if include_indices else ""
 
             if not isinstance(song, MP3):
@@ -154,9 +154,6 @@ class Mix:
 
         return result
 
-    def mix_length(self):
-        return len(self.track_groups)
-
     BACK_TO_MIX = ".back_to_mix"
     END_OF_MIX = ".add_to_end"
 
@@ -164,7 +161,7 @@ class Mix:
         if action_prompt.strip() != "":
             action_prompt = f"{action_prompt.strip()} "
 
-        mix_length = len(self.track_groups)
+        mix_length = self.track_count()
 
         if include_end:
             mix_length += 1
@@ -208,8 +205,8 @@ class Mix:
                 except:
                     pass
 
-        if mix_choice >= 0 and mix_choice < len(self.track_groups):
-            selection = self.track_groups[mix_choice]
+        if mix_choice >= 0 and mix_choice < self.track_count():
+            selection = self.get_tracks()[mix_choice]
         else:
             selection = None, None
 
