@@ -6,36 +6,59 @@ from colorama import Fore, Style
 from mutagen.mp3 import MP3
 from pyfzf import FzfPrompt
 
-
 class Mix:
     mix_title = ""
-    tracks = []
+    track_groups: list[list] = []
 
     def __init__(self, mix_title):
         self.mix_title = mix_title
 
     def add_track_or_break(self, new_track):
-        self.tracks.append(new_track)
+        self.track_groups.append([new_track])
 
     def get_tracks(self):
-        return self.tracks
+        flattened_tracks = [item for sublist in self.track_groups for item in sublist]
+        return flattened_tracks
+
+        # return self.tracks
 
     def track_count(self):
         return len(self.get_tracks())
 
-    def move_track(self, move, to_index):
-        self.tracks.remove(move)
-        self.tracks.insert(to_index, move)
+    def track_location_by_abs_index(self, track_index):
+        index = 0
+        for group_index, track_group in enumerate(self.track_groups):
+            for local_index, _ in enumerate(track_group):
+                if index == track_index:
+                    return local_index, group_index
+
+                index += 1
+
+        return -1, -1
+
+    def group_length(self, group_index):
+        return len(self.track_groups[group_index])
+
+    def move_track(self, from_index, to_index):
+        local_index, group_index = self.track_location_by_abs_index(from_index)
+        move_track = self.track_groups[group_index][local_index]
+
+        del self.track_groups[group_index][local_index]
+
+        if self.group_length(group_index) <= 0:
+            del self.track_groups[group_index]
+
+        self.track_groups.insert(to_index, [move_track])
 
     def swap_tracks(self, first_track_index, second_track_index):
-        self.tracks[first_track_index], self.tracks[second_track_index] = self.tracks[second_track_index], self.tracks[first_track_index]
+        self.track_groups[first_track_index], self.track_groups[second_track_index] = self.track_groups[second_track_index], self.track_groups[first_track_index]
 
     def remove_track(self, track):
-        self.tracks.remove(track)
+        self.track_groups.remove(track)
 
     def display(self):
         longest_title = max(
-            len(song.get('Title', Path(song.filename).stem)[0]) for song in self.tracks if isinstance(song, MP3)) + 20
+            len(song.get('Title', Path(song.filename).stem)[0]) for song in self.track_groups if isinstance(song, MP3)) + 20
         section_num = 0
         section_length: float = 0
         total_length: float = 0
@@ -47,7 +70,7 @@ class Mix:
         print(
             f"{padding}{Fore.GREEN}{self.mix_title}\n\n{Style.RESET_ALL}{Fore.YELLOW}{padding}{title_a.ljust(longest_title)} {title_b}{Style.RESET_ALL}")
 
-        for i, song in enumerate(self.tracks):
+        for i, song in enumerate(self.track_groups):
             index_str = f"{i + 1:{index_format}}."
 
             if not isinstance(song, MP3):
@@ -100,12 +123,12 @@ class Mix:
 
     def get_formatting(self):
         index_format = "0"
-        num_digits = len(str(len(self.tracks)))
+        num_digits = len(str(len(self.track_groups)))
 
         if num_digits > 1:
             index_format += str(num_digits)
 
-        padding = re.sub('.', ' ', f"{len(self.tracks):{index_format}}. ")
+        padding = re.sub('.', ' ', f"{len(self.track_groups):{index_format}}. ")
 
         return index_format, padding
 
@@ -116,7 +139,7 @@ class Mix:
 
         index_format, _ = self.get_formatting()
 
-        for i, song in enumerate(self.tracks):
+        for i, song in enumerate(self.track_groups):
             index_str = f"{i + 1:{index_format}}. " if include_indices else ""
 
             if not isinstance(song, MP3):
@@ -132,7 +155,7 @@ class Mix:
         return result
 
     def mix_length(self):
-        return len(self.tracks)
+        return len(self.track_groups)
 
     BACK_TO_MIX = ".back_to_mix"
     END_OF_MIX = ".add_to_end"
@@ -141,7 +164,7 @@ class Mix:
         if action_prompt.strip() != "":
             action_prompt = f"{action_prompt.strip()} "
 
-        mix_length = len(self.tracks)
+        mix_length = len(self.track_groups)
 
         if include_end:
             mix_length += 1
@@ -185,8 +208,8 @@ class Mix:
                 except:
                     pass
 
-        if mix_choice >= 0 and mix_choice < len(self.tracks):
-            selection = self.tracks[mix_choice]
+        if mix_choice >= 0 and mix_choice < len(self.track_groups):
+            selection = self.track_groups[mix_choice]
         else:
             selection = None, None
 

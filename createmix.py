@@ -144,7 +144,7 @@ def view(mix: Mix):
 
             if song_action == "m":
                 _, second_track_index = mix.prompt_track_selection(action_prompt=action_prompt, include_end=True)
-                mix.move_track(move=selection, to_index=second_track_index)
+                mix.move_track(from_index=first_track_index, to_index=second_track_index)
             elif song_action == "s":
                 second_track, second_track_index = mix.prompt_track_selection(action_prompt=action_prompt)
                 mix.swap_tracks(first_track_index=first_track_index, second_track_index=second_track_index)
