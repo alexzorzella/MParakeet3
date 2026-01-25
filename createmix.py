@@ -208,7 +208,9 @@ def export_to_txt(output, mix_title, mix):
     output_mix_path = output
     output_mix_path.mkdir(parents=True, exist_ok=True)
 
-    with open(output_mix_path / f"{mix_title}.txt", "w", encoding="utf-8") as file:
+    filepath = output_mix_path / f"{mix_title}.txt"
+
+    with open(filepath, "w", encoding="utf-8") as file:
         for track in mix.get_tracks():
             if isinstance(track, MP3):
                 track_title = track.get('Title', Path(track.filename).stem)[0]
@@ -217,14 +219,18 @@ def export_to_txt(output, mix_title, mix):
             elif isinstance(track, str):
                 file.write(f"{track}\n")
 
+    input(f"Wrote to {Fore.YELLOW}{filepath}{Style.RESET_ALL}, press enter to continue ")
+
 def copy_files(output, mix_title, mix):
     output_mix_path = output / mix_title
     output_mix_path.mkdir(parents=True, exist_ok=True)
 
-    for i, file in enumerate(mix):
+    for i, file in enumerate(mix.get_tracks()):
         filepath = Path(file.filename)
         output_path = output_mix_path / filepath.name
         run_ffmpeg(track_num=i + 1, album=mix_title, source=filepath, destination=output_path)
+
+    input(f"Copied tracks to {Fore.YELLOW}{output_mix_path}{Style.RESET_ALL}, press enter to continue ")
 
 import vlc
 from mutagen.mp3 import MP3
