@@ -70,7 +70,7 @@ class Mix:
         print(
             f"{padding}{Fore.GREEN}{self.mix_title}\n\n{Style.RESET_ALL}{Fore.YELLOW}{padding}{title_a.ljust(longest_title)} {title_b}{Style.RESET_ALL}")
 
-        for i, song in enumerate(self.track_groups):
+        for i, song in enumerate(self.get_tracks()):
             index_str = f"{i + 1:{index_format}}."
 
             if not isinstance(song, MP3):
