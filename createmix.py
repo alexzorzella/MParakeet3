@@ -116,6 +116,9 @@ def view(mix: Mix):
 
         selection, first_track_index = mix.prompt_track_selection()
 
+        if selection == "e":
+            return
+
         if not isinstance(selection, MP3):
             selected_track_title = "break"
         else:
@@ -181,8 +184,6 @@ def view(mix: Mix):
         elif song_action == "r":
             mix.tracks.remove(selection)
             action_message = f"Removed {selected_track_title} from the mix"
-        elif song_action == "e":
-            pass
 
         print("\n" * 100)
 
@@ -200,14 +201,12 @@ def add_break(mix):
         try:
             time_values = limit.split(":")
 
-            if len(time_values) > 3 or len(time_values) <= 0:
-                continue
-            else:
-                for i, value in enumerate(time_values):
+            if len(time_values) <= 3 and len(time_values) > 0:
+                for value in time_values:
                     int(value)
 
-                mix.append(f".break {limit}")
-                return
+                mix.add_track_or_break(f".break {limit}")
+                break
         except:
             pass
 
@@ -216,7 +215,7 @@ def export_to_txt(output, mix_title, mix):
     output_mix_path.mkdir(parents=True, exist_ok=True)
 
     with open(output_mix_path / f"{mix_title}.txt", "w", encoding="utf-8") as file:
-        for i, track in enumerate(mix):
+        for track in mix.tracks:
             if isinstance(track, MP3):
                 track_title = track.get('Title', Path(track.filename).stem)[0]
                 print(track_title)

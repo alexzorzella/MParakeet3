@@ -137,7 +137,7 @@ class Mix:
                 f"Select a track or break {action_prompt}using 1-{mix_length}, [S]earch Mix, or [E]xit: ").lower()
 
             if mix_choice_input == "e":
-                return
+                return "e", None
             elif mix_choice_input == "s":
                 track_names = self.track_names(include_indices=True)
 
@@ -172,7 +172,7 @@ class Mix:
         if mix_choice >= 0 and mix_choice < len(self.tracks):
             selection = self.tracks[mix_choice]
         else:
-            selection = None
+            selection = None, None
 
         return selection, mix_choice
 
