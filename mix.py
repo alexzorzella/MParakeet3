@@ -123,7 +123,7 @@ class Mix:
         group_number = 0
         for track_group in self.track_groups:
             is_group = len(track_group) > 1
-            if is_group > 1:
+            if is_group:
                 group_number += 1
 
             for track in track_group:
@@ -155,10 +155,9 @@ class Mix:
                     part_name = f"{alphabet[section_num].upper()} Side"
 
                     if is_group:
-                        part_name = f"{colors[group_number % len(colors)]}{part_name}{Style.RESET_ALL}"
-
-                    print(
-                        f"{Fore.YELLOW}{index_str} {part_name.ljust(longest_title, '.')}{Style.RESET_ALL} {color}{difference_sign}{section_length_as_str}{Style.RESET_ALL} ")
+                        print(f"{Fore.YELLOW}{index_str} {colors[group_number % len(colors)]}{part_name.ljust(longest_title, '.')}{Style.RESET_ALL} {color}{difference_sign}{section_length_as_str}{Style.RESET_ALL} ")
+                    else:
+                        print(f"{Fore.YELLOW}{index_str} {part_name.ljust(longest_title, '.')}{Style.RESET_ALL} {color}{difference_sign}{section_length_as_str}{Style.RESET_ALL} ")
 
                     section_num += 1
                     section_length = 0
@@ -172,10 +171,9 @@ class Mix:
                     total_length += song_length
 
                     if is_group:
-                        song_title = f"{colors[group_number % len(colors)]}{song_title}{Style.RESET_ALL}"
-
-                    print(
-                        f"{index_str} {song_title.replace("： ", ": ").ljust(longest_title, '.')} ({song_length_as_str})")
+                        print(f"{index_str} {colors[group_number % len(colors)]}{song_title.replace("： ", ": ").ljust(longest_title, '.')}{Style.RESET_ALL} ({song_length_as_str})")
+                    else:
+                        print(f"{index_str} {song_title.replace("： ", ": ").ljust(longest_title, '.')} ({song_length_as_str})")
 
                 index += 1
 
@@ -277,4 +275,4 @@ class Mix:
         return selection, choice_index
 
 alphabet = "abcdefghijklknopqrstuvwxyz"
-colors = [ Fore.RED, Fore.YELLOW, Fore.GREEN, Fore.CYAN, Fore.MAGENTA ]
+colors = [ Fore.RED, Fore.GREEN, Fore.CYAN, Fore.MAGENTA ]
