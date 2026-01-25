@@ -157,9 +157,16 @@ def view(mix: Mix):
                     second_track_title = second_track.get('Title', Path(second_track.filename).stem)[0]
 
                 action_message = f"Swapped {selected_track_title} with {second_track_title}"
-
         elif song_action == "g":
-            pass
+            _, second_track_index = mix.prompt_track_selection(action_prompt="Group", include_end=True)
+            mix.group_tracks(first_track_index, second_track_index)
+
+            if not isinstance(second_track, MP3):
+                second_track_title = "break"
+            else:
+                second_track_title = second_track.get('Title', Path(second_track.filename).stem)[0]
+
+            action_message = f"Grouped {selected_track_title} with {second_track_title}"
         elif song_action == "p":
             play_song(selection.filename)
         elif song_action == "t":
