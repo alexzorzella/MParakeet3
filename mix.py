@@ -40,12 +40,32 @@ class Mix:
         return len(self.track_groups[group_index])
 
     def move_track(self, from_index, to_index):
+        if from_index == to_index:
+            return
+
         group_index, local_index = self.track_location_by_abs_index(from_index)
         move_track = self.track_groups[group_index][local_index]
+        move_to_track = self.get_tracks()[to_index]
 
         self.remove_track(from_index)
 
-        self.track_groups.insert(to_index, [move_track])
+        to_index = self.get_tracks().index(move_to_track)
+        move_to_group_index, move_to_local_index = self.track_location_by_abs_index(to_index)
+
+        move_to_track_group = self.track_groups[move_to_group_index]
+
+        if len(move_to_track_group) <= 1:
+            self.track_groups.insert(move_to_group_index + 1, [move_track])
+        else:
+            if move_to_local_index == len(move_to_track_group) - 1:
+                do_insert = input(
+                    f"Do you want to insert {Fore.YELLOW}{self.get_track_title(move_track)}{Style.RESET_ALL} into "
+                    f"{Fore.YELLOW}{self.get_track_title(move_to_track)}'s{Style.RESET_ALL} group? (y/n): ").lower()
+
+                if do_insert:
+                    self.track_groups[move_to_group_index].insert(move_to_local_index + 1, [move_track])
+                else:
+                    self.track_groups.insert(move_to_group_index + 1, [move_track])
 
     def swap_tracks(self, first_track_index, second_track_index):
         first_track_group_index, first_track_local_index = self.track_location_by_abs_index(first_track_index)
@@ -63,6 +83,12 @@ class Mix:
 
         if self.group_length(group_index) <= 0:
             del self.track_groups[group_index]
+
+    def get_track_title(self, track):
+        if isinstance(track, MP3):
+            return track.get('Title', Path(track.filename).stem)[0]
+
+        return track
 
     def display(self):
         longest_title = max(
