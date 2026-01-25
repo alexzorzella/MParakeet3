@@ -70,7 +70,7 @@ class Mix:
                     do_insert = True
 
                 if do_insert:
-                    self.track_groups[move_to_group_index].insert(move_to_local_index + 1, [move_track])
+                    move_to_track_group.insert(move_to_local_index + 1, move_track)
                 else:
                     self.track_groups.insert(move_to_group_index + 1, [move_track])
             else:
