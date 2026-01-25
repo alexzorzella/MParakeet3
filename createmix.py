@@ -146,7 +146,7 @@ def view(mix: Mix):
                 _, second_track_index = mix.prompt_track_selection(action_prompt=action_prompt, include_end=True)
 
                 mix.tracks.remove(selection)
-                mix.tracks.insert(second_track_index - 1, selection)
+                mix.tracks.insert(second_track_index, selection)
             elif song_action == "s":
                 second_track, second_track_index = mix.prompt_track_selection(action_prompt=action_prompt)
 
