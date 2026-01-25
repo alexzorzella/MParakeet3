@@ -49,6 +49,10 @@ class Mix:
 
         self.remove_track(from_index)
 
+        if to_index <= 0:
+            self.track_groups.insert(0, [move_track])
+            return
+
         to_index = self.get_tracks().index(move_to_track)
         move_to_group_index, move_to_local_index = self.track_location_by_abs_index(to_index)
 
@@ -215,22 +219,21 @@ class Mix:
         return result
 
     BACK_TO_MIX = ".back_to_mix"
-    END_OF_MIX = ".add_to_end"
+    BEGINNING_OF_MIX = ".beginning"
 
-    def prompt_track_selection(self, action_prompt="", include_end=False):
+    def prompt_track_selection(self, action_prompt="", include_beginning=False):
         if action_prompt.strip() != "":
             action_prompt = f"{action_prompt.strip()} "
 
         mix_length = self.track_count()
 
-        if include_end:
-            mix_length += 1
+        choice_index = -2
 
-        mix_choice = -1
+        min_choice = 0 if include_beginning else 1
 
-        while mix_choice < 0 or mix_choice >= mix_length:
+        while choice_index < (min_choice - 1) or choice_index >= mix_length:
             mix_choice_input = input(
-                f"Select a track or break {action_prompt}using 1-{mix_length}, [S]earch Mix, or [E]xit: ").lower()
+                f"Select a track or break {action_prompt}using {min_choice}-{mix_length}, [S]earch Mix, or [E]xit: ").lower()
 
             if mix_choice_input == "e":
                 return "e", None
@@ -239,8 +242,8 @@ class Mix:
 
                 options = [*track_names]
 
-                if include_end:
-                    options.append(Mix.END_OF_MIX)
+                if include_beginning:
+                    options.append(Mix.BEGINNING_OF_MIX)
 
                 options.append(Mix.BACK_TO_MIX)
 
@@ -248,29 +251,30 @@ class Mix:
 
                 selected = fzf.prompt(options, fzf_options='--cycle')
 
-                if len(selected) != 1 or selected == Mix.BACK_TO_MIX:
-                    continue
-
-                if selected == Mix.BACK_TO_MIX:
-                    mix_choice = mix_length
+                if len(selected) != 1:
                     continue
 
                 selected = selected[0]
 
-                mix_choice = options.index(selected)
+                if selected == Mix.BACK_TO_MIX:
+                    return "e", None
+                elif selected == Mix.BEGINNING_OF_MIX:
+                    return None, 0
+
+                choice_index = options.index(selected)
             else:
                 try:
-                    mix_choice = int(mix_choice_input)
-                    mix_choice -= 1
+                    choice_index = int(mix_choice_input)
+                    choice_index -= 1
                 except:
                     pass
 
-        if mix_choice >= 0 and mix_choice < self.track_count():
-            selection = self.get_tracks()[mix_choice]
+        if choice_index >= 0 and choice_index < self.track_count():
+            selection = self.get_tracks()[choice_index]
         else:
-            selection = None, None
+            selection = None
 
-        return selection, mix_choice
+        return selection, choice_index
 
 alphabet = "abcdefghijklknopqrstuvwxyz"
 colors = [ Fore.RED, Fore.YELLOW, Fore.GREEN, Fore.CYAN, Fore.MAGENTA ]
