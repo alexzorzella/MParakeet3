@@ -140,7 +140,7 @@ def view(mix: Mix):
         action_message = ""
 
         if song_action == "m" or song_action == "s":
-            action_prompt = "Move" if song_action == "m" else "Swap"
+            action_prompt = "to move after" if song_action == "m" else "to swap with"
 
             if song_action == "m":
                 _, second_track_index = mix.prompt_track_selection(action_prompt=action_prompt, include_end=True)
@@ -158,7 +158,7 @@ def view(mix: Mix):
 
                 action_message = f"Swapped {selected_track_title} with {second_track_title}"
         elif song_action == "g":
-            _, second_track_index = mix.prompt_track_selection(action_prompt="Group", include_end=True)
+            _, second_track_index = mix.prompt_track_selection(action_prompt="to group with", include_end=True)
             mix.group_tracks(first_track_index, second_track_index)
 
             if not isinstance(second_track, MP3):
