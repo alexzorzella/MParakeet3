@@ -123,8 +123,6 @@ class Mix:
         group_number = 0
         for track_group in self.track_groups:
             is_group = len(track_group) > 1
-            if is_group:
-                group_number += 1
 
             for track in track_group:
                 index_str = f"{index + 1:{index_format}}."
@@ -176,6 +174,9 @@ class Mix:
                         print(f"{index_str} {song_title.replace("： ", ": ").ljust(longest_title, '.')} ({song_length_as_str})")
 
                 index += 1
+
+            if is_group:
+                group_number += 1
 
         time_struct = time.gmtime(total_length)
         total_length_as_str = time.strftime("%H:%M:%S", time_struct)
@@ -275,4 +276,4 @@ class Mix:
         return selection, choice_index
 
 alphabet = "abcdefghijklknopqrstuvwxyz"
-colors = [ Fore.RED, Fore.GREEN, Fore.CYAN, Fore.MAGENTA ]
+colors = [ Fore.LIGHTRED_EX, Fore.LIGHTGREEN_EX, Fore.LIGHTCYAN_EX, Fore.LIGHTMAGENTA_EX ]
