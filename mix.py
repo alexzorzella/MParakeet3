@@ -17,6 +17,12 @@ class Mix:
     def add_track_or_break(self, new_track):
         self.tracks.append(new_track)
 
+    def get_tracks(self):
+        return self.tracks
+
+    def track_count(self):
+        return len(self.get_tracks())
+
     def display(self):
         longest_title = max(
             len(song.get('Title', Path(song.filename).stem)[0]) for song in self.tracks if isinstance(song, MP3)) + 20

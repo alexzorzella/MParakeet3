@@ -23,16 +23,14 @@ class Loader:
             self.file_names.append(track_name)
             self.file_name_to_audio_file[track_name] = audio_file
 
-    def load_mix(self, loaded_mix_path):
-        tracks = []
-
+    def load_mix(self, loaded_mix_path, mix):
         if loaded_mix_path.is_file():
             mix_title = loaded_mix_path.stem
 
             with open(loaded_mix_path, 'r') as file:
                 for line in file:
                     if line.split(" ")[0] == ".break":
-                        tracks.append(line)
+                        mix.add_track_or_break(line)
                     else:
                         processed_line = line.strip()
 
@@ -49,9 +47,8 @@ class Loader:
                                 track = audio_track
 
                         if track is not None:
-                            tracks.append(track)
+                            mix.add_track_or_break(track)
 
-            input(f"Loaded {len(tracks)} tracks from {mix_title}.\nPress enter to continue")
         elif loaded_mix_path.is_dir():
             mix_title = loaded_mix_path.stem
 
@@ -59,10 +56,9 @@ class Loader:
             mix_audio_files = [MP3(file, ID3=EasyID3) for file in mix_tracks]
 
             for audio_file in mix_audio_files:
-                tracks.append(self.file_name_to_audio_file[audio_file.get('Title', Path(audio_file.filename).stem)[0]])
-
-            print(f"Loaded {len(tracks)} tracks from {mix_title}")
+                audio_file_as_track = self.file_name_to_audio_file[audio_file.get('Title', Path(audio_file.filename).stem)[0]]
+                mix.add_track_or_break(audio_file_as_track)
         else:
             print(f"Didn't find a file or directory to load a mix from at {loaded_mix_path}.\nPress enter to continue")
 
-        return tracks
+        input(f"Loaded {mix.track_count()} tracks from {mix_title}.\nPress enter to continue")

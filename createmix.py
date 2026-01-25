@@ -62,7 +62,7 @@ def main():
     mix = Mix(mix_title=mix_title)
 
     if args.load_mix is not None:
-        mix.tracks = loader.load_mix(Path(args.load_mix))
+        loader.load_mix(Path(args.load_mix), mix)
 
     while mix_title.strip() == "":
         inp = input("Enter mix title :3 : ")
@@ -111,8 +111,6 @@ def view(mix: Mix):
 
     while True:
         mix.display()
-
-        mix_length = mix.mix_length()
 
         selection, first_track_index = mix.prompt_track_selection()
 
