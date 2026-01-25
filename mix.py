@@ -119,12 +119,16 @@ class Mix:
         return len(self.tracks)
 
     BACK_TO_MIX = ".back_to_mix"
+    END_OF_MIX = ".add_to_end"
 
-    def prompt_selection(self, action_prompt=""):
+    def prompt_track_selection(self, action_prompt="", include_end=False):
         if action_prompt.strip() != "":
             action_prompt = f"{action_prompt.strip()} "
 
         mix_length = len(self.tracks)
+
+        if include_end:
+            mix_length += 1
 
         mix_choice = -1
 
@@ -136,7 +140,14 @@ class Mix:
                 return
             elif mix_choice_input == "s":
                 track_names = self.track_names(include_indices=True)
-                options = [*track_names, Mix.BACK_TO_MIX]
+
+                options = [*track_names]
+
+                if include_end:
+                    options.append(Mix.END_OF_MIX)
+
+                options.append(Mix.BACK_TO_MIX)
+
                 fzf = FzfPrompt()
 
                 selected = fzf.prompt(options, fzf_options='--cycle')
@@ -144,9 +155,13 @@ class Mix:
                 if len(selected) != 1 or selected == Mix.BACK_TO_MIX:
                     continue
 
+                if selected == Mix.BACK_TO_MIX:
+                    mix_choice = mix_length
+                    continue
+
                 selected = selected[0]
 
-                mix_choice = track_names.index(selected)
+                mix_choice = options.index(selected)
             else:
                 try:
                     mix_choice = int(mix_choice_input)
@@ -154,7 +169,10 @@ class Mix:
                 except:
                     pass
 
-        selection = self.tracks[mix_choice]
+        if mix_choice >= 0 and mix_choice < len(self.tracks):
+            selection = self.tracks[mix_choice]
+        else:
+            selection = None
 
         return selection, mix_choice
 

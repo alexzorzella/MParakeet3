@@ -114,7 +114,7 @@ def view(mix: Mix):
 
         mix_length = mix.mix_length()
 
-        selection, first_track_index = mix.prompt_selection()
+        selection, first_track_index = mix.prompt_track_selection()
 
         if not isinstance(selection, MP3):
             selected_track_title = "break"
@@ -141,18 +141,20 @@ def view(mix: Mix):
         if song_action == "m" or song_action == "s":
             action_prompt = "Move" if song_action == "m" else "Swap"
 
-            second_track, second_track_index = mix.prompt_selection(action_prompt=action_prompt)
-
             if song_action == "m":
+                _, second_track_index = mix.prompt_track_selection(action_prompt=action_prompt, include_end=True)
+
                 mix.tracks.remove(selection)
                 mix.tracks.insert(second_track_index - 1, selection)
             elif song_action == "s":
+                second_track, second_track_index = mix.prompt_track_selection(action_prompt=action_prompt)
+
                 mix.tracks[first_track_index], mix.tracks[second_track_index] = mix.tracks[second_track_index], mix.tracks[first_track_index]
 
             if song_action == "m":
-                action_message = f"Moved {selected_track_title} to {second_track_index}"
+                action_message = f"Moved {selected_track_title} to {second_track_index + 1}"
             elif song_action == "s":
-                if not isinstance(selection, MP3):
+                if not isinstance(second_track, MP3):
                     second_track_title = "break"
                 else:
                     second_track_title = second_track.get('Title', Path(second_track.filename).stem)[0]
