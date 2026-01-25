@@ -104,50 +104,65 @@ class Mix:
         print(
             f"{padding}{Fore.GREEN}{self.mix_title}\n\n{Style.RESET_ALL}{Fore.YELLOW}{padding}{title_a.ljust(longest_title)} {title_b}{Style.RESET_ALL}")
 
-        for i, song in enumerate(self.get_tracks()):
-            index_str = f"{i + 1:{index_format}}."
+        index = 0
+        group_number = 0
+        for track_group in self.track_groups:
+            is_group = len(track_group) > 1
+            if is_group > 1:
+                group_number += 1
 
-            if not isinstance(song, MP3):
-                break_time_cutoff_raw = song.split(" ")[1]
+            for track in track_group:
+                index_str = f"{index + 1:{index_format}}."
 
-                time_values = break_time_cutoff_raw.split(":")
+                if not isinstance(track, MP3):
+                    break_time_cutoff_raw = track.split(" ")[1]
 
-                break_time_cutoff: int = 0
+                    time_values = break_time_cutoff_raw.split(":")
 
-                if len(time_values) == 1:
-                    break_time_cutoff = int(time_values[0])
-                elif len(time_values) == 2:
-                    break_time_cutoff = int(time_values[0]) * 60 + int(time_values[0])
-                elif len(time_values) == 3:
-                    break_time_cutoff = int(time_values[0]) * 60 * 60 + int(time_values[1]) * 60 + int(time_values[2])
+                    break_time_cutoff: int = 0
 
-                time_difference = abs(break_time_cutoff - section_length)
-                section_length_ok = section_length <= break_time_cutoff
-                difference_sign = "-" if section_length_ok else "+"
+                    if len(time_values) == 1:
+                        break_time_cutoff = int(time_values[0])
+                    elif len(time_values) == 2:
+                        break_time_cutoff = int(time_values[0]) * 60 + int(time_values[0])
+                    elif len(time_values) == 3:
+                        break_time_cutoff = int(time_values[0]) * 60 * 60 + int(time_values[1]) * 60 + int(time_values[2])
 
-                color = Fore.GREEN if section_length_ok else Fore.RED
+                    time_difference = abs(break_time_cutoff - section_length)
+                    section_length_ok = section_length <= break_time_cutoff
+                    difference_sign = "-" if section_length_ok else "+"
 
-                time_struct = time.gmtime(time_difference)
-                section_length_as_str = time.strftime("%H:%M:%S", time_struct)
+                    color = Fore.GREEN if section_length_ok else Fore.RED
 
-                part_name = f"{alphabet[section_num].upper()} Side"
+                    time_struct = time.gmtime(time_difference)
+                    section_length_as_str = time.strftime("%H:%M:%S", time_struct)
 
-                print(
-                    f"{Fore.YELLOW}{index_str} {part_name.ljust(longest_title, '.')}{Style.RESET_ALL} {color}{difference_sign}{section_length_as_str}{Style.RESET_ALL} ")
+                    part_name = f"{alphabet[section_num].upper()} Side"
 
-                section_num += 1
-                section_length = 0
-            else:
-                song_title = song.get('Title', Path(song.filename).stem)[0]
-                song_length = song.info.length
-                time_struct = time.gmtime(song_length)
-                song_length_as_str = time.strftime("%H:%M:%S", time_struct)
+                    if is_group:
+                        part_name = f"{colors[group_number % len(colors)]}{part_name}{Style.RESET_ALL}"
 
-                section_length += song_length
-                total_length += song_length
+                    print(
+                        f"{Fore.YELLOW}{index_str} {part_name.ljust(longest_title, '.')}{Style.RESET_ALL} {color}{difference_sign}{section_length_as_str}{Style.RESET_ALL} ")
 
-                print(
-                    f"{index_str} {song_title.replace("： ", ": ").ljust(longest_title, '.')} ({song_length_as_str})")
+                    section_num += 1
+                    section_length = 0
+                else:
+                    song_title = track.get('Title', Path(track.filename).stem)[0]
+                    song_length = track.info.length
+                    time_struct = time.gmtime(song_length)
+                    song_length_as_str = time.strftime("%H:%M:%S", time_struct)
+
+                    section_length += song_length
+                    total_length += song_length
+
+                    if is_group:
+                        song_title = f"{colors[group_number % len(colors)]}{song_title}{Style.RESET_ALL}"
+
+                    print(
+                        f"{index_str} {song_title.replace("： ", ": ").ljust(longest_title, '.')} ({song_length_as_str})")
+
+                index += 1
 
         time_struct = time.gmtime(total_length)
         total_length_as_str = time.strftime("%H:%M:%S", time_struct)
