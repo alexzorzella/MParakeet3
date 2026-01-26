@@ -71,17 +71,11 @@ def main():
 
 VIEW_OPTIONS = {
     "a" : "[A]dd song(s)",
-    "e": "[E]dit",
-    "s": "[S]ave",
-    "x": "E[x]port",
-    "q": "or [Q]uit"
+    "e" : "[E]dit",
+    "s" : "[S]ave",
+    "x" : "E[x]port",
+    "q" : "or [Q]uit"
 }
-
-ADD_SONGS = "add song(s)"
-EDIT = ".edit"
-SAVE = ".save"
-EXPORT = ".export"
-QUIT = ".quit"
 
 def view(mix: Mix):
     print("\n" * 100)
@@ -101,6 +95,17 @@ def view(mix: Mix):
 
         VIEW_OPTION_FUNCS[choice](mix)
 
+EDIT_OPTIONS = {
+    "o" : "Switch M[o]de",
+    "m" : "[M]ove",
+    "s" : "[S]wap",
+    "g" : "[G]roup",
+    "p" : "[P]lay",
+    "t" : "Preview [T]ransition",
+    "r" : "[R]emove From Mix",
+    "e" : "[E]xit"
+}
+
 def edit(mix: Mix):
     print("\n" * 100)
 
@@ -119,18 +124,16 @@ def edit(mix: Mix):
 
         print(f"\nSelecting {Fore.GREEN}{selected_track_title}{Style.RESET_ALL}")
 
+        mode = "Group" if mix.group_mode else "Track"
+
         song_action = ""
 
-        options = ["m", "s", "g", "p", "t", "r", "e"] if isinstance(selection, MP3) else ["m", "s", "g", "r", "e"]
+        actions = [ "o", "m", "s", "g", "p", "t", "r", "e"] if isinstance(selection, MP3) else [ "o", "m", "s", "g", "r", "e"]
+        options = ", ".join([EDIT_OPTIONS[key] for key in EDIT_OPTIONS.keys() if key in actions])
+        options = f"{Fore.GREEN}({mode} Mode){Style.RESET_ALL} {options}: "
 
-        while song_action not in options:
-            try:
-                if isinstance(selection, MP3):
-                    song_action = input(f"[M]ove, [S]wap, [G]roup, [P]lay, Preview [T]ransition, [R]emove From Mix, or [E]xit: ").lower()
-                else:
-                    song_action = input("[M]ove, [S]wap, [G]roup, [R]emove From Mix, or [E]xit: ").lower()
-            except:
-                pass
+        while song_action not in actions:
+            song_action = input(options).lower()
 
         action_message = ""
 

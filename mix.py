@@ -15,6 +15,8 @@ class Mix:
     output = None
     loader: Loader | None = None
 
+    group_mode = False
+
     def __init__(self, mix_title, output=None):
         self.mix_title = mix_title
         self.output = output
