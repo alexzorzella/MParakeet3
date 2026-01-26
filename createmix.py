@@ -1,8 +1,10 @@
 import time
 import argparse
+
 import pathvalidate
 
 from pathlib import Path
+
 from pyfzf.pyfzf import FzfPrompt
 
 from mix import Mix
@@ -76,131 +78,6 @@ VIEW_OPTIONS = {
     "x" : "E[x]port",
     "q" : "or [Q]uit"
 }
-
-def view(mix: Mix):
-    print("\n" * 100)
-
-    while True:
-        mix.display()
-
-        choice = ""
-
-        options = [option for option in VIEW_OPTIONS.values()]
-
-        while choice not in VIEW_OPTION_FUNCS.keys():
-            choice = input(f"{", ".join(options)}: ").lower()
-
-        if choice == "q":
-            break
-
-        VIEW_OPTION_FUNCS[choice](mix)
-
-EDIT_OPTIONS = {
-    "o" : "Switch M[o]de",
-    "m" : "[M]ove",
-    "s" : "[S]wap",
-    "g" : "[G]roup",
-    "p" : "[P]lay",
-    "t" : "Preview [T]ransition",
-    "r" : "[R]emove From Mix",
-    "e" : "[E]xit"
-}
-
-def edit(mix: Mix):
-    print("\n" * 100)
-
-    while True:
-        mix.display()
-
-        selection, first_track_index = mix.prompt_track_selection()
-
-        if selection == "e":
-            return
-
-        if not isinstance(selection, MP3):
-            selected_track_title = "break"
-        else:
-            selected_track_title = selection.get('Title', Path(selection.filename).stem)[0]
-
-        print(f"\nSelecting {Fore.GREEN}{selected_track_title}{Style.RESET_ALL}")
-
-        mode = "Group" if mix.group_mode else "Track"
-
-        song_action = ""
-
-        actions = [ "o", "m", "s", "g", "p", "t", "r", "e"] if isinstance(selection, MP3) else [ "o", "m", "s", "g", "r", "e"]
-        options = ", ".join([EDIT_OPTIONS[key] for key in EDIT_OPTIONS.keys() if key in actions])
-        options = f"{Fore.GREEN}({mode} Mode){Style.RESET_ALL} {options}: "
-
-        while song_action not in actions:
-            song_action = input(options).lower()
-
-        action_message = ""
-
-        if song_action == "m" or song_action == "s":
-            action_prompt = "to move after" if song_action == "m" else "to swap with"
-
-            if song_action == "m":
-                second_track, second_track_index = mix.prompt_track_selection(action_prompt=action_prompt, include_beginning=True)
-
-                if second_track == "e":
-                    continue
-
-                mix.move_track(from_index=first_track_index, to_index=second_track_index)
-            elif song_action == "s":
-                second_track, second_track_index = mix.prompt_track_selection(action_prompt=action_prompt)
-
-                if second_track == "e":
-                    continue
-
-                mix.swap_tracks(first_track_index=first_track_index, second_track_index=second_track_index)
-            if song_action == "m":
-                action_message = f"Moved {selected_track_title} to {second_track_index + 1}"
-            elif song_action == "s":
-                if not isinstance(second_track, MP3):
-                    second_track_title = "break"
-                else:
-                    second_track_title = second_track.get('Title', Path(second_track.filename).stem)[0]
-
-                action_message = f"Swapped {selected_track_title} with {second_track_title}"
-        elif song_action == "g":
-            second_track, second_track_index = mix.prompt_track_selection(action_prompt="to group with")
-
-            if second_track == "e":
-                continue
-
-            mix.group_tracks(first_track_index, second_track_index)
-
-            if not isinstance(second_track, MP3):
-                second_track_title = "break"
-            else:
-                second_track_title = second_track.get('Title', Path(second_track.filename).stem)[0]
-
-            action_message = f"Grouped {selected_track_title} with {second_track_title}"
-        elif song_action == "p":
-            play_song(selection.filename)
-        elif song_action == "t":
-            selected_song_path = selection.filename
-
-            next_song_index = first_track_index + 1
-            next_song = None
-
-            while next_song_index < mix.track_count() and not isinstance(next_song, MP3):
-                next_song = mix.get_tracks()[next_song_index]
-                next_song_index += 1
-
-            if next_song is not None:
-                next_song_path = next_song.filename
-                preview_transition(selected_song_path, next_song_path, preview_length=10)
-        elif song_action == "r":
-            mix.remove_track(first_track_index)
-            action_message = f"Removed {selected_track_title} from the mix"
-
-        print("\n" * 100)
-
-        if action_message != "":
-            _, padding = mix.get_formatting()
-            print(f"{Fore.YELLOW}{padding}{action_message}{Style.RESET_ALL}\n")
 
 ADD_BREAK = ".add_break"
 DONE = ".done"
@@ -287,6 +164,159 @@ def copy_files(mix):
             i += 1
 
     input(f"Copied tracks to {Fore.YELLOW}{output_mix_path}{Style.RESET_ALL}, press enter to continue ")
+
+def view(mix: Mix):
+    print("\n" * 100)
+
+    while True:
+        mix.display()
+
+        choice = ""
+
+        options = [option for option in VIEW_OPTIONS.values()]
+
+        while choice not in VIEW_OPTION_FUNCS.keys():
+            choice = input(f"{", ".join(options)}: ").lower()
+
+        if choice == "q":
+            break
+
+        VIEW_OPTION_FUNCS[choice](mix)
+
+EDIT_OPTIONS = {
+    "o" : "Switch M[o]de",
+    "m" : "[M]ove",
+    "s" : "[S]wap",
+    "g" : "[G]roup",
+    "p" : "[P]lay",
+    "t" : "Preview [T]ransition",
+    "r" : "[R]emove From Mix",
+    "e" : "[E]xit"
+}
+
+def switch_mode(mix: Mix, selection, first_track_index, selected_track_title):
+    mix.group_mode = not mix.group_mode
+
+    return None
+
+def move(mix: Mix, selection, first_track_index, selected_track_title):
+    second_track, second_track_index = mix.prompt_track_selection(action_prompt="to move after", include_beginning=True)
+
+    if second_track == "e":
+        return None
+
+    mix.move_track(from_index=first_track_index, to_index=second_track_index)
+
+    return f"Moved {selected_track_title} to {second_track_index + 1}"
+
+def swap(mix: Mix, selection, first_track_index, selected_track_title):
+    second_track, second_track_index = mix.prompt_track_selection(action_prompt="to swap with")
+
+    if second_track == "e":
+        return None
+
+    mix.swap_tracks(first_track_index=first_track_index, second_track_index=second_track_index)
+
+    if not isinstance(second_track, MP3):
+        second_track_title = "break"
+    else:
+        second_track_title = second_track.get('Title', Path(second_track.filename).stem)[0]
+
+    return f"Swapped {selected_track_title} with {second_track_title}"
+
+def group(mix: Mix, selection, first_track_index, selected_track_title):
+    second_track, second_track_index = mix.prompt_track_selection(action_prompt="to group with")
+
+    if second_track == "e":
+        return None
+
+    mix.group_tracks(first_track_index, second_track_index)
+
+    if not isinstance(second_track, MP3):
+        second_track_title = "break"
+    else:
+        second_track_title = second_track.get('Title', Path(second_track.filename).stem)[0]
+
+    return f"Grouped {selected_track_title} with {second_track_title}"
+
+def play(mix: Mix, selection, first_track_index, selected_track_title):
+    play_song(selection.filename)
+
+    return ""
+
+def preview_transition(mix: Mix, selection, first_track_index, selected_track_title):
+    selected_song_path = selection.filename
+
+    next_song_index = first_track_index + 1
+    next_song = None
+
+    while next_song_index < mix.track_count() and not isinstance(next_song, MP3):
+        next_song = mix.get_tracks()[next_song_index]
+        next_song_index += 1
+
+    if next_song is not None:
+        next_song_path = next_song.filename
+        preview_transition(selected_song_path, next_song_path, preview_length=10)
+
+    return ""
+
+def remove_from_mix(mix: Mix, selection, first_track_index, selected_track_title):
+    mix.remove_track(first_track_index)
+    return f"Removed {selected_track_title} from the mix"
+
+EDIT_OPTION_FUNCS = {
+    "o" : switch_mode,
+    "m" : move,
+    "s" : swap,
+    "g" : group,
+    "p" : play,
+    "t" : preview_transition,
+    "r" : remove_from_mix,
+    "e" : None
+}
+
+def edit(mix: Mix):
+    print("\n" * 100)
+
+    while True:
+        mix.display()
+
+        selection, first_track_index = mix.prompt_track_selection()
+
+        if selection == "e":
+            return
+
+        if not isinstance(selection, MP3):
+            selected_track_title = "break"
+        else:
+            selected_track_title = selection.get('Title', Path(selection.filename).stem)[0]
+
+        print(f"\nSelecting {Fore.GREEN}{selected_track_title}{Style.RESET_ALL}")
+
+        mode = f"{Fore.LIGHTGREEN_EX}Group{Style.RESET_ALL}" if mix.group_mode else f"{Fore.LIGHTCYAN_EX}Track{Style.RESET_ALL}"
+
+        song_action = ""
+
+        actions = [ "o", "m", "s", "g", "p", "t", "r", "e"] if isinstance(selection, MP3) else [ "o", "m", "s", "g", "r", "e"]
+        options = ", ".join([EDIT_OPTIONS[key] for key in EDIT_OPTIONS.keys() if key in actions])
+        options = f"({mode} Mode) {options}: "
+
+        while song_action not in actions:
+            song_action = input(options).lower()
+
+        if song_action == "e":
+            break
+
+        action_message = EDIT_OPTION_FUNCS[song_action](mix, selection, first_track_index, selected_track_title)
+
+        if action_message is None:
+            continue
+
+        print("\n" * 100)
+
+        if action_message != "":
+            _, padding = mix.get_formatting()
+            print(f"{Fore.YELLOW}{padding}{action_message}{Style.RESET_ALL}\n")
 
 import vlc
 from mutagen.mp3 import MP3
