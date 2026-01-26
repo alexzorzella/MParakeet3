@@ -293,13 +293,13 @@ def edit(mix: Mix):
 
         print(f"\nSelecting {Fore.GREEN}{selected_track_title}{Style.RESET_ALL}")
 
-        mode = f"{Fore.LIGHTGREEN_EX}Group{Style.RESET_ALL}" if mix.group_mode else f"{Fore.LIGHTCYAN_EX}Track{Style.RESET_ALL}"
+        mode = f"{Fore.LIGHTGREEN_EX}(Group Mode){Style.RESET_ALL}" if mix.group_mode else f"{Fore.LIGHTCYAN_EX}(Track Mode){Style.RESET_ALL}"
 
         song_action = ""
 
         actions = [ "o", "m", "s", "g", "p", "t", "r", "e"] if isinstance(selection, MP3) else [ "o", "m", "s", "g", "r", "e"]
         options = ", ".join([EDIT_OPTIONS[key] for key in EDIT_OPTIONS.keys() if key in actions])
-        options = f"({mode} Mode) {options}: "
+        options = f"{mode} {options}: "
 
         while song_action not in actions:
             song_action = input(options).lower()
