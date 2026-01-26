@@ -197,7 +197,7 @@ EDIT_OPTIONS = {
 def switch_mode(mix: Mix, selection, first_track_index, selected_track_title):
     mix.group_mode = not mix.group_mode
 
-    return None
+    return f"Switched to {mix.current_mode()}"
 
 def move(mix: Mix, selection, first_track_index, selected_track_title):
     second_track, second_track_index = mix.prompt_track_selection(action_prompt="to move after", include_beginning=True)
@@ -275,27 +275,33 @@ EDIT_OPTION_FUNCS = {
     "e" : None
 }
 
+PERSISTENT = [ "o", "g", "p", "t" ]
+
 def edit(mix: Mix):
     print("\n" * 100)
+
+    song_action = ""
+    selection, first_track_index, selected_track_title = None, None, None
 
     while True:
         mix.display()
 
-        selection, first_track_index = mix.prompt_track_selection()
+        if song_action not in PERSISTENT:
+            selection, first_track_index = mix.prompt_track_selection()
 
-        if selection == "e":
-            return
+            if selection == "e":
+                return
 
-        if not isinstance(selection, MP3):
-            selected_track_title = "break"
-        else:
-            selected_track_title = selection.get('Title', Path(selection.filename).stem)[0]
+            if not isinstance(selection, MP3):
+                selected_track_title = "break"
+            else:
+                selected_track_title = selection.get('Title', Path(selection.filename).stem)[0]
+
+        song_action = ""
 
         print(f"\nSelecting {Fore.GREEN}{selected_track_title}{Style.RESET_ALL}")
 
-        mode = f"{Fore.LIGHTGREEN_EX}(Group Mode){Style.RESET_ALL}" if mix.group_mode else f"{Fore.LIGHTCYAN_EX}(Track Mode){Style.RESET_ALL}"
-
-        song_action = ""
+        mode = mix.current_mode()
 
         actions = [ "o", "m", "s", "g", "p", "t", "r", "e"] if isinstance(selection, MP3) else [ "o", "m", "s", "g", "r", "e"]
         options = ", ".join([EDIT_OPTIONS[key] for key in EDIT_OPTIONS.keys() if key in actions])

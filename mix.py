@@ -21,6 +21,9 @@ class Mix:
         self.mix_title = mix_title
         self.output = output
 
+    def current_mode(self):
+        return f"{Fore.LIGHTGREEN_EX}(Group Mode){Style.RESET_ALL}" if self.group_mode else f"{Fore.LIGHTCYAN_EX}(Track Mode){Style.RESET_ALL}"
+
     def add_track_or_break(self, new_track):
         self.track_groups.append([new_track])
 
