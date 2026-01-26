@@ -17,8 +17,6 @@ from colorama import Fore
 from colorama import Style
 
 def main():
-    ################################## Setup ##################################
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--load-mix", type=str, help="Load a mix from a directory or file")
     parser.add_argument("-s", "--search", type=str, help="Search from directory")
@@ -205,7 +203,7 @@ def move(mix: Mix, selection, first_track_index, selected_track_title):
     if second_track == "e":
         return None
 
-    mix.move_track(from_index=first_track_index, to_index=second_track_index)
+    mix.move_track_or_group(from_index=first_track_index, to_index=second_track_index)
 
     return f"Moved {selected_track_title} to {second_track_index + 1}"
 
@@ -215,7 +213,7 @@ def swap(mix: Mix, selection, first_track_index, selected_track_title):
     if second_track == "e":
         return None
 
-    mix.swap_tracks(first_track_index=first_track_index, second_track_index=second_track_index)
+    mix.swap_tracks_or_groups(first_track_index=first_track_index, second_track_index=second_track_index)
 
     if not isinstance(second_track, MP3):
         second_track_title = "break"
@@ -230,7 +228,7 @@ def group(mix: Mix, selection, first_track_index, selected_track_title):
     if second_track == "e":
         return None
 
-    mix.group_tracks(first_track_index, second_track_index)
+    mix.group_tracks_or_groups(first_track_index, second_track_index)
 
     if not isinstance(second_track, MP3):
         second_track_title = "break"
@@ -261,7 +259,7 @@ def preview_transition(mix: Mix, selection, first_track_index, selected_track_ti
     return ""
 
 def remove_from_mix(mix: Mix, selection, first_track_index, selected_track_title):
-    mix.remove_track(first_track_index)
+    mix.remove_track_or_group(first_track_index)
     return f"Removed {selected_track_title} from the mix"
 
 EDIT_OPTION_FUNCS = {
