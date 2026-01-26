@@ -48,7 +48,6 @@ class Loader:
 
                         if track is not None:
                             mix.add_track_or_break(track)
-
         elif loaded_mix_path.is_dir():
             mix_title = loaded_mix_path.stem
 
@@ -62,3 +61,5 @@ class Loader:
             print(f"Didn't find a file or directory to load a mix from at {loaded_mix_path}.\nPress enter to continue")
 
         input(f"Loaded {mix.track_count()} tracks from {mix_title}.\nPress enter to continue")
+
+        mix.loader = self

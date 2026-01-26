@@ -6,12 +6,18 @@ from colorama import Fore, Style
 from mutagen.mp3 import MP3
 from pyfzf import FzfPrompt
 
+from loader import Loader
+
 class Mix:
     mix_title = ""
     track_groups: list[list] = []
 
-    def __init__(self, mix_title):
+    output = None
+    loader: Loader | None = None
+
+    def __init__(self, mix_title, output=None):
         self.mix_title = mix_title
+        self.output = output
 
     def add_track_or_break(self, new_track):
         self.track_groups.append([new_track])
@@ -106,6 +112,10 @@ class Mix:
         return track
 
     def display(self):
+        if self.track_count() <= 0:
+            print(f"{Fore.GREEN}{self.mix_title}{Style.RESET_ALL} is empty. Add breaks and tracks below!\n\n")
+            return
+
         longest_title = max(
             len(song.get('Title', Path(song.filename).stem)[0]) for song in self.get_tracks() if isinstance(song, MP3)) + 20
         section_num = 0
@@ -117,7 +127,7 @@ class Mix:
         title_a = "Song Title"
         title_b = "Length"
         print(
-            f"{padding}{Fore.GREEN}{self.mix_title}\n\n{Style.RESET_ALL}{Fore.YELLOW}{padding}{title_a.ljust(longest_title)} {title_b}{Style.RESET_ALL}")
+            f"{padding}{Fore.GREEN}{self.mix_title}{Style.RESET_ALL}\n\n{Fore.YELLOW}{padding}{title_a.ljust(longest_title)} {title_b}{Style.RESET_ALL}")
 
         index = 0
         group_number = 0

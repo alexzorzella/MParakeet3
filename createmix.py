@@ -14,12 +14,6 @@ from ffmparakeet import run_ffmpeg
 from colorama import Fore
 from colorama import Style
 
-EXIT = ".exit"
-VIEW = ".mix"
-ADD_BREAK = ".add_break"
-EXPORT_TO_TXT = ".write_to_txt"
-COPY_FILES = ".export_mix"
-
 def main():
     ################################## Setup ##################################
 
@@ -59,7 +53,7 @@ def main():
     elif args.load_mix is not None:
         mix_title = Path(args.load_mix).stem
 
-    mix = Mix(mix_title=mix_title)
+    mix = Mix(mix_title=mix_title, output=output)
 
     if args.load_mix is not None:
         loader.load_mix(Path(args.load_mix), mix)
@@ -73,40 +67,41 @@ def main():
     if ok.lower() != "y":
         return
 
-    ################################## Mix Editor ##################################
+    view(mix)
 
-    options = [*loader.file_names, VIEW, ADD_BREAK, EXPORT_TO_TXT, COPY_FILES, EXIT]
-    fzf = FzfPrompt()
+VIEW_OPTIONS = {
+    "a" : "[A]dd song(s)",
+    "e": "[E]dit",
+    "s": "[S]ave",
+    "x": "E[x]port",
+    "q": "or [Q]uit"
+}
 
-    while True:
-        selected = fzf.prompt(options, '--cycle')
-
-        if len(selected) != 1:
-            continue
-
-        selected = selected[0]
-
-        if selected == VIEW:
-            view(mix)
-            continue
-        elif selected == ADD_BREAK:
-            add_break(mix)
-            continue
-        elif selected == EXPORT_TO_TXT:
-            export_to_txt(output, mix_title, mix)
-            continue
-        elif selected == COPY_FILES:
-            copy_files(output, mix_title, mix)
-            break
-        elif selected == EXIT:
-            return
-
-        selected = loader.file_name_to_audio_file[selected]
-        mix.add_track_or_break(selected)
-
-    ##############################################################################
+ADD_SONGS = "add song(s)"
+EDIT = ".edit"
+SAVE = ".save"
+EXPORT = ".export"
+QUIT = ".quit"
 
 def view(mix: Mix):
+    print("\n" * 100)
+
+    while True:
+        mix.display()
+
+        choice = ""
+
+        options = [option for option in VIEW_OPTIONS.values()]
+
+        while choice not in VIEW_OPTION_FUNCS.keys():
+            choice = input(f"{", ".join(options)}: ").lower()
+
+        if choice == "q":
+            break
+
+        VIEW_OPTION_FUNCS[choice](mix)
+
+def edit(mix: Mix):
     print("\n" * 100)
 
     while True:
@@ -204,6 +199,30 @@ def view(mix: Mix):
             _, padding = mix.get_formatting()
             print(f"{Fore.YELLOW}{padding}{action_message}{Style.RESET_ALL}\n")
 
+ADD_BREAK = ".add_break"
+DONE = ".done"
+
+def add_songs(mix: Mix):
+    options = [*mix.loader.file_names, ADD_BREAK, DONE]
+    fzf = FzfPrompt()
+
+    while True:
+        selected = fzf.prompt(options, '--cycle')
+
+        if len(selected) != 1:
+            continue
+
+        selected = selected[0]
+
+        if selected == ADD_BREAK:
+            add_break(mix)
+            continue
+        elif selected == DONE:
+            return
+
+        selected = mix.loader.file_name_to_audio_file[selected]
+        mix.add_track_or_break(selected)
+
 def add_break(mix):
     while True:
         limit = input("Section length (hh:mm:ss) or [E]xit: ")
@@ -223,31 +242,46 @@ def add_break(mix):
         except:
             pass
 
-def export_to_txt(output, mix_title, mix):
-    output_mix_path = output
+def save(mix: Mix):
+    export_to_txt(mix)
+
+def export(mix: Mix):
+    export_mode = input("Export to .[t]xt, copy tracks to [f]older, or [E]xit: ")
+
+    if export_mode == "t":
+        export_to_txt(mix, only_titles=True)
+    elif export_mode == "f":
+        copy_files(mix)
+
+def export_to_txt(mix, only_titles=False):
+    output_mix_path = mix.output
     output_mix_path.mkdir(parents=True, exist_ok=True)
 
-    filepath = output_mix_path / f"{mix_title}.txt"
+    note = " (Titles)" if only_titles else ""
+
+    filepath = output_mix_path / f"{mix.mix_title}{note}.txt"
 
     with open(filepath, "w", encoding="utf-8") as file:
         for track in mix.get_tracks():
             if isinstance(track, MP3):
                 track_title = track.get('Title', Path(track.filename).stem)[0]
-                print(track_title)
                 file.write(f"{track_title}\n")
-            elif isinstance(track, str):
-                file.write(f"{track}\n")
+            elif isinstance(track, str) and not only_titles:
+                file.write(f"{track}")
 
     input(f"Wrote to {Fore.YELLOW}{filepath}{Style.RESET_ALL}, press enter to continue ")
 
-def copy_files(output, mix_title, mix):
-    output_mix_path = output / mix_title
+def copy_files(mix):
+    output_mix_path = mix.output / mix.mix_title
     output_mix_path.mkdir(parents=True, exist_ok=True)
 
-    for i, file in enumerate(mix.get_tracks()):
-        filepath = Path(file.filename)
-        output_path = output_mix_path / filepath.name
-        run_ffmpeg(track_num=i + 1, album=mix_title, source=filepath, destination=output_path)
+    i = 0
+    for file in mix.get_tracks():
+        if isinstance(file, MP3):
+            filepath = Path(file.filename)
+            output_path = output_mix_path / filepath.name
+            run_ffmpeg(track_num=i + 1, album=mix.mix_title, source=filepath, destination=output_path)
+            i += 1
 
     input(f"Copied tracks to {Fore.YELLOW}{output_mix_path}{Style.RESET_ALL}, press enter to continue ")
 
@@ -285,6 +319,14 @@ def preview_transition(song_ending_path, song_starting_path, preview_length=1):
 
     input("Press enter to stop playback ")
     song_starting_player.stop()
+
+VIEW_OPTION_FUNCS = {
+    "a" : add_songs,
+    "e" : edit,
+    "s" : save,
+    "x" : export,
+    "q": None
+}
 
 if __name__ == "__main__":
     main()
