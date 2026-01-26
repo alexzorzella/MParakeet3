@@ -39,9 +39,10 @@ options:
 ```
 
 ## Create Mix
-`createmix.py` allows for mix creation given a local directory containing music. While searching for music, use `.mix` to view the current tracklist, `.write_to_txt` to export a `.txt` file containing the mix, `.export_mix` to copy the tracks into the output directory with metadata so that they're ordered, and `.exit` to exit without saving. Mixes can be loaded by passing a directory or `.txt` file containing the track names into `-l` or `--load-mix`.<br><br>
-Tracks can be added, removed, and re-ordered in the mix. To keep track of side lengths for formats with time restrictions like cassette tapes and CDs, breaks can be added along with a maximum time that displays how much time the section is over or how much time that section has left. In the future, tracks and breaks will be able to be grouped together and moved as a unit.<br><br>
-How each song flows into the next is important. Songs can be played when selected in the mix editor and, most importantly, the transition between a song and the song that comes after it.
+Mixtape creation is the main event here. By using music in a specified search directory, mixtapes can be created from scratch, loaded from a `.txt` file, or loaded from a directory contianing music.<br><br>
+Tracks can be added, removed, and re-ordered in the mix. To keep track of side lengths for formats with time restrictions like cassette tapes and CDs, breaks can be added containing a maximum time. Breaks display how much their section is over or under. Tracks and breaks can be grouped together to be moved as a unit.<br><br>
+How each song flows into the next is important. Songs can be played when selected in the mix editor and, most importantly, the transition between a song and the song that comes after it can be previewed.<br><br>
+The mix can be saved as a `.txt` file including its breaks. It can also be exported as a `.txt` file only containing its track titles, or copied into a directory with metadata including track numbers according to mix order and album name according to the mix title.
 
 ```
 createmix.py [-h] [-l LOAD_MIX] [-s SEARCH] [-o OUTPUT] [-n NAME]
