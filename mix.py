@@ -89,17 +89,12 @@ class Mix:
                     else:
                         do_insert = True
 
-                    before = from_index < (to_index + 1)
-
                     if do_insert:
-                        if before:
-                            move_to_track_group.insert(0, move)
-                        else:
-                            move_to_track_group.append(move)
+                        move_to_track_group.insert(move_to_local_index, move)
                     else:
-                        self.track_groups.insert(move_to_group_index + 1, [move])
+                        self.track_groups.insert(move_to_group_index, [move])
                 else:
-                    self.track_groups.insert(move_to_group_index + 1, [move])
+                    self.track_groups.insert(move_to_group_index, [move])
 
     def group_tracks_or_groups(self, first_track_index, second_track_index):
         if first_track_index == second_track_index:
