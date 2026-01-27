@@ -309,7 +309,7 @@ def edit(mix: Mix):
             song_action = input(options).lower()
 
         if song_action == "e":
-            break
+            continue
 
         action_message = EDIT_OPTION_FUNCS[song_action](mix, selection, first_track_index, selected_track_title)
 
