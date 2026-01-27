@@ -273,7 +273,7 @@ EDIT_OPTION_FUNCS = {
     "e" : None
 }
 
-PERSISTENT = [ "o", "g", "p", "t" ]
+PERSISTENT = [ "o", "p", "t" ]
 
 def edit(mix: Mix):
     print("\n" * 100)

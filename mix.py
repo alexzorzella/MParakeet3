@@ -61,7 +61,6 @@ class Mix:
         self.remove_track_or_group(from_index)
 
         if self.group_mode:
-
             to_index = self.get_tracks().index(move_to_track)
             move_to_group_index, _ = self.track_location_by_abs_index(to_index)
 
@@ -90,8 +89,13 @@ class Mix:
                     else:
                         do_insert = True
 
+                    before = from_index < (to_index + 1)
+
                     if do_insert:
-                        move_to_track_group.insert(move_to_local_index + 1, move)
+                        if before:
+                            move_to_track_group.insert(0, move)
+                        else:
+                            move_to_track_group.append(move)
                     else:
                         self.track_groups.insert(move_to_group_index + 1, [move])
                 else:
