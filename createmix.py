@@ -273,7 +273,7 @@ EDIT_OPTION_FUNCS = {
     "e" : None
 }
 
-PERSISTENT = [ "o", "g", "p", "t" ]
+PERSISTENT = [ "o", "p", "t" ]
 
 def edit(mix: Mix):
     print("\n" * 100)
@@ -309,7 +309,7 @@ def edit(mix: Mix):
             song_action = input(options).lower()
 
         if song_action == "e":
-            break
+            continue
 
         action_message = EDIT_OPTION_FUNCS[song_action](mix, selection, first_track_index, selected_track_title)
 
