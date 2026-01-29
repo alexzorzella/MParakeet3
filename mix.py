@@ -45,63 +45,62 @@ class Mix:
 
                 index += 1
 
-        return -1, -1
+        return len(self.track_groups), 0
 
     def group_length(self, group_index):
         return len(self.track_groups[group_index])
 
-    def move_track_or_group(self, from_index, to_index, force_group=False):
+    def move_track_or_group(self, from_index, to_index):
         if from_index == to_index:
             return
 
         group_index, local_index = self.track_location_by_abs_index(from_index)
         move = self.track_groups[group_index] if self.group_mode else self.track_groups[group_index][local_index]
-        move_to_track = self.get_tracks()[to_index]
+        move_to_track = self.get_tracks()[to_index] if to_index < self.track_count() else None
 
         self.remove_track_or_group(from_index)
 
         if self.group_mode:
-
-            to_index = self.get_tracks().index(move_to_track)
+            to_index = self.get_tracks().index(move_to_track) if to_index < self.track_count() else self.track_count()
             move_to_group_index, _ = self.track_location_by_abs_index(to_index)
 
-            if not force_group:
-                self.track_groups.insert(move_to_group_index, move)
-            else:
-                self.track_groups[move_to_group_index].extend(move)
+            # if not force_group:
+            #     self.track_groups.insert(move_to_group_index, move)
+            # else:
+            #     self.track_groups[move_to_group_index].extend(move)
         else:
             if to_index <= 0:
                 self.track_groups.insert(0, [move])
                 return
 
-            to_index = self.get_tracks().index(move_to_track)
+            to_index = self.get_tracks().index(move_to_track) if to_index < self.track_count() else self.track_count()
             move_to_group_index, move_to_local_index = self.track_location_by_abs_index(to_index)
+
+            if move_to_group_index >= len(self.track_groups):
+                self.track_groups.append([])
 
             move_to_track_group = self.track_groups[move_to_group_index]
 
-            if len(move_to_track_group) <= 1 and not force_group:
-                self.track_groups.insert(move_to_group_index + 1, [move])
+            if len(move_to_track_group) <= 1:
+                self.track_groups.insert(move_to_group_index, [move])
             else:
                 if move_to_local_index == len(move_to_track_group) - 1:
-                    if not force_group:
-                        do_insert = input(
-                            f"Do you want to insert {Fore.YELLOW}{self.get_track_title(move)}{Style.RESET_ALL} into "
-                            f"{Fore.YELLOW}{self.get_track_title(move_to_track)}'s{Style.RESET_ALL} group? (y/n): ").lower()
-                    else:
-                        do_insert = True
+                    do_insert = input(
+                        f"Do you want to insert {Fore.YELLOW}{self.get_track_title(move)}{Style.RESET_ALL} into "
+                        f"{Fore.YELLOW}{self.get_track_title(move_to_track)}'s{Style.RESET_ALL} group? (y/n): ").lower()
 
                     if do_insert:
-                        move_to_track_group.insert(move_to_local_index + 1, move)
+                        move_to_track_group.insert(move_to_local_index, move)
                     else:
-                        self.track_groups.insert(move_to_group_index + 1, [move])
+                        self.track_groups.insert(move_to_group_index, [move])
                 else:
-                    self.track_groups.insert(move_to_group_index + 1, [move])
+                    self.track_groups.insert(move_to_group_index, [move])
 
     def group_tracks_or_groups(self, first_track_index, second_track_index):
         if first_track_index == second_track_index:
             return
 
-        self.move_track_or_group(from_index=first_track_index, to_index=second_track_index, force_group=True)
+        # self.move_track_or_group(from_index=first_track_index, to_index=second_track_index, force_group=True)
 
     def swap_tracks_or_groups(self, first_track_index, second_track_index):
         first_track_group_index, first_track_local_index = self.track_location_by_abs_index(first_track_index)
@@ -253,8 +252,9 @@ class Mix:
 
     BACK_TO_MIX = ".back_to_mix"
     BEGINNING_OF_MIX = ".beginning"
+    END_OF_MIX = ".end"
 
-    def prompt_track_selection(self, action_prompt="", include_beginning=False):
+    def prompt_track_selection(self, action_prompt="", include_beginning=False, include_end=False):
         if action_prompt.strip() != "":
             action_prompt = f"{action_prompt.strip()} "
 
@@ -264,7 +264,10 @@ class Mix:
 
         min_choice = 0 if include_beginning else 1
 
-        while choice_index < (min_choice - 1) or choice_index >= mix_length:
+        if include_end:
+            mix_length += 1
+
+        while choice_index < (min_choice - 1) or choice_index > mix_length:
             mix_choice_input = input(
                 f"Select a track or break {action_prompt}using {min_choice}-{mix_length}, [S]earch Mix, or [E]xit: ").lower()
 
@@ -277,6 +280,9 @@ class Mix:
 
                 if include_beginning:
                     options.append(Mix.BEGINNING_OF_MIX)
+
+                if include_end:
+                    options.append(Mix.END_OF_MIX)
 
                 options.append(Mix.BACK_TO_MIX)
 
@@ -293,6 +299,8 @@ class Mix:
                     return "e", None
                 elif selected == Mix.BEGINNING_OF_MIX:
                     return None, 0
+                elif selected == Mix.END_OF_MIX:
+                    return None, mix_length
 
                 choice_index = options.index(selected)
             else:

@@ -198,14 +198,14 @@ def switch_mode(mix: Mix, selection, first_track_index, selected_track_title):
     return f"Switched to {mix.current_mode()}"
 
 def move(mix: Mix, selection, first_track_index, selected_track_title):
-    second_track, second_track_index = mix.prompt_track_selection(action_prompt="to move after", include_beginning=True)
+    second_track, second_track_index = mix.prompt_track_selection(action_prompt="to move after", include_end=True)
 
     if second_track == "e":
         return None
 
     mix.move_track_or_group(from_index=first_track_index, to_index=second_track_index)
 
-    return f"Moved {selected_track_title} to {second_track_index + 1}"
+    return f"Moved {selected_track_title} to {second_track_index}"
 
 def swap(mix: Mix, selection, first_track_index, selected_track_title):
     second_track, second_track_index = mix.prompt_track_selection(action_prompt="to swap with")
