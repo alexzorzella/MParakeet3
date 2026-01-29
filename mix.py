@@ -63,11 +63,6 @@ class Mix:
         if self.group_mode:
             to_index = self.get_tracks().index(move_to_track) if to_index < self.track_count() else self.track_count()
             move_to_group_index, _ = self.track_location_by_abs_index(to_index)
-
-            # if not force_group:
-            #     self.track_groups.insert(move_to_group_index, move)
-            # else:
-            #     self.track_groups[move_to_group_index].extend(move)
         else:
             if to_index <= 0:
                 self.track_groups.insert(0, [move])
