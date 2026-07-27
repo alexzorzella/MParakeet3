@@ -1,0 +1,12 @@
+[project]
+name = "mparakeet3"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "mutagen>=1.48.1",
+    "pyside6>=6.11.1",
+    "python-vlc>=3.0.21203",
+    "ytmusicapi>=1.12.1",
+]
