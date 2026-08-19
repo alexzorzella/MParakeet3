@@ -21,8 +21,8 @@ MParakeet3 reads information from a local `config.ini` file if provided one in t
 style=windows11
 
 [mix]
-search=C:\Users\gracek\Music
-mixes=C:\Users\gracek\Music\Mixes
+search=C:\Users\vkim\Music
+mixes=C:\Users\vkim\Music\Mixes
 ```
 
 ### style
