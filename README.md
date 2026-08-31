@@ -7,11 +7,14 @@
 
 MParakeet3 is a free, open source mixtape creator that uses mp3 files on your device.
 
+## Installation Guide
+https://guides.highqualitybackup.com/mparakeet3/installation/
+
 ## Requirements
 - [ffmpeg](https://www.ffmpeg.org/download.html) (Audio/Video encoder).
 - [VLC](https://images.videolan.org/vlc/download-windows.html) (Audio/Video player). Make sure to install the appropriate version for your system. Installing the x32 version on a 64-bit system may cause issues.
 
-To install them on Windows, use `winget install fzf`, `winget install ffmpeg`, and `winget install VideoLAN.VLC`.<br>To install them on Mac, use [Homebrew](https://brew.sh/) to run `brew install fzf`, `brew install ffmpeg`, and `brew install vlc`.
+To install them on Windows, use `winget install ffmpeg`, and `winget install VideoLAN.VLC`.<br>To install them on Mac, use [Homebrew](https://brew.sh/) to run `brew install fzf`, `brew install ffmpeg`, and `brew install vlc`.
 
 ## config.ini
 MParakeet3 reads information from a local `config.ini` file if provided one in the same folder as the executable.
